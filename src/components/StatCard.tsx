@@ -1,9 +1,9 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
 
-interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface StatCardProps {
   title: string;
   value: string | number;
   icon?: React.ReactNode;
@@ -12,9 +12,10 @@ interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
     label: string;
     positive?: boolean;
   };
+  className?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({
+const StatCard: React.FC<StatCardProps & Omit<HTMLMotionProps<"div">, "title" | "value">> = ({
   title,
   value,
   icon,
