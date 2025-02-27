@@ -12,10 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_USERS } from "@/lib/types";
 import AuthLayout from "@/components/AuthLayout";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { authenticate } from "@/lib/db";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,20 +26,25 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
     
-    // Simulate login process
-    setTimeout(() => {
-      const user = MOCK_USERS.find(user => user.email === email);
+    try {
+      // Pequeno atraso para simular comunicação com o servidor
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      if (user && password === "password") { // Simple password check for demo
-        toast.success("Login successful!");
+      const result = authenticate(email, password);
+      
+      if (result.success && result.user) {
+        toast.success("Login realizado com sucesso!");
         
-        // Redirect based on user role
-        switch (user.role) {
+        // Salva o usuário atual no localStorage para permanecer logado
+        localStorage.setItem('currentUser', JSON.stringify(result.user));
+        
+        // Redireciona com base no papel do usuário
+        switch (result.user.role) {
           case "admin":
             navigate("/admin");
             break;
@@ -53,16 +58,24 @@ const Login = () => {
             navigate("/");
         }
       } else {
-        setError("Invalid email or password");
+        setError(result.message || "Credenciais inválidas");
         uiToast({
-          title: "Login failed",
-          description: "Invalid email or password",
+          title: "Falha no login",
+          description: result.message || "Email ou senha inválidos",
           variant: "destructive"
         });
       }
-      
+    } catch (err) {
+      console.error("Erro ao fazer login:", err);
+      setError("Ocorreu um erro ao tentar fazer login");
+      uiToast({
+        title: "Erro",
+        description: "Ocorreu um erro ao tentar fazer login",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
   
   const togglePasswordVisibility = () => {
@@ -71,8 +84,8 @@ const Login = () => {
 
   return (
     <AuthLayout 
-      title="Welcome Back"
-      subtitle="Sign in to access your account"
+      title="Bem-vindo"
+      subtitle="Entre em sua conta para continuar"
     >
       {error && (
         <motion.div
@@ -85,7 +98,7 @@ const Login = () => {
         </motion.div>
       )}
       
-      <form onSubmit={handleLogin}>
+      <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-4">
           <div>
             <label 
@@ -101,11 +114,11 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="usuario@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={cn(
-                  "pl-10",
+                  "pl-10 rounded-xl h-12 bg-slate-50 border-slate-200 focus-visible:ring-primary",
                   error && "border-red-300 focus-visible:ring-red-400"
                 )}
                 required
@@ -118,7 +131,7 @@ const Login = () => {
               htmlFor="password" 
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Password
+              Senha
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -131,7 +144,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={cn(
-                  "pl-10",
+                  "pl-10 rounded-xl h-12 bg-slate-50 border-slate-200 focus-visible:ring-primary",
                   error && "border-red-300 focus-visible:ring-red-400"
                 )}
                 required
@@ -156,28 +169,28 @@ const Login = () => {
               className="text-sm text-primary hover:underline"
               onClick={(e) => e.preventDefault()}
             >
-              Forgot password?
+              Esqueceu a senha?
             </a>
           </div>
           
           <Button 
             type="submit" 
-            className="w-full"
+            className="w-full rounded-xl h-12 text-base font-medium bg-primary hover:bg-primary/90 transition-colors"
             disabled={isLoading}
           >
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </div>
       </form>
       
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
-          For demo purposes, use any of these email accounts with password "password":
+          Para fins de demonstração, use qualquer um destes emails com a senha "password":
         </p>
         <div className="mt-2 space-y-1 text-xs text-gray-500">
           <p>admin@fitnesshub.com (Admin)</p>
-          <p>john@fitnesshub.com (Teacher)</p>
-          <p>mike@example.com (Student)</p>
+          <p>john@fitnesshub.com (Professor)</p>
+          <p>mike@example.com (Aluno)</p>
         </div>
       </div>
     </AuthLayout>
