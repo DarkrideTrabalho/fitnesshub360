@@ -15,16 +15,37 @@ import { useToast } from "@/hooks/use-toast";
 import AuthLayout from "@/components/AuthLayout";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { authenticate } from "@/lib/db";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast: uiToast } = useToast();
+  const { signIn, userProfile, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // Redireciona se já estiver autenticado
+  React.useEffect(() => {
+    if (userProfile) {
+      // Redireciona com base no papel do usuário
+      switch (userProfile.role) {
+        case "admin":
+          navigate("/admin");
+          break;
+        case "teacher":
+          navigate("/teacher");
+          break;
+        case "student":
+          navigate("/student");
+          break;
+        default:
+          navigate("/");
+      }
+    }
+  }, [userProfile, navigate]);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,45 +53,15 @@ const Login = () => {
     setError("");
     
     try {
-      // Pequeno atraso para simular comunicação com o servidor
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const result = authenticate(email, password);
-      
-      if (result.success && result.user) {
-        toast.success("Login realizado com sucesso!");
-        
-        // Salva o usuário atual no localStorage para permanecer logado
-        localStorage.setItem('currentUser', JSON.stringify(result.user));
-        
-        // Redireciona com base no papel do usuário
-        switch (result.user.role) {
-          case "admin":
-            navigate("/admin");
-            break;
-          case "teacher":
-            navigate("/teacher");
-            break;
-          case "student":
-            navigate("/student");
-            break;
-          default:
-            navigate("/");
-        }
-      } else {
-        setError(result.message || "Credenciais inválidas");
-        uiToast({
-          title: "Falha no login",
-          description: result.message || "Email ou senha inválidos",
-          variant: "destructive"
-        });
-      }
-    } catch (err) {
+      await signIn(email, password);
+      toast.success("Login realizado com sucesso!");
+      // O redirecionamento será feito pelo useEffect acima
+    } catch (err: any) {
       console.error("Erro ao fazer login:", err);
-      setError("Ocorreu um erro ao tentar fazer login");
+      setError(err.message || "Credenciais inválidas");
       uiToast({
-        title: "Erro",
-        description: "Ocorreu um erro ao tentar fazer login",
+        title: "Falha no login",
+        description: err.message || "Email ou senha inválidos",
         variant: "destructive"
       });
     } finally {
@@ -81,6 +72,19 @@ const Login = () => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  if (authLoading) {
+    return (
+      <AuthLayout 
+        title="Autenticando"
+        subtitle="Aguarde um momento..."
+      >
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout 
@@ -185,13 +189,8 @@ const Login = () => {
       
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
-          Para fins de demonstração, use qualquer um destes emails com a senha "password":
+          Para fins de demonstração, use uma das contas criadas no Supabase
         </p>
-        <div className="mt-2 space-y-1 text-xs text-gray-500">
-          <p>admin@fitnesshub.com (Admin)</p>
-          <p>john@fitnesshub.com (Professor)</p>
-          <p>mike@example.com (Aluno)</p>
-        </div>
       </div>
     </AuthLayout>
   );

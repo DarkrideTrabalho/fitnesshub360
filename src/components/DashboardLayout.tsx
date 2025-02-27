@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { 
@@ -14,15 +14,14 @@ import {
   Settings,
   Search,
   Sun,
-  Moon,
-  ChevronRight
+  Moon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import BadgeIcon from "./BadgeIcon";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getUserById } from "@/lib/db";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -35,33 +34,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { userProfile, signOut, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  useEffect(() => {
-    // Verifica se há um usuário logado
-    const userJson = localStorage.getItem('currentUser');
-    if (userJson) {
-      try {
-        const userData = JSON.parse(userJson);
-        // Busca informações adicionais do usuário
-        const user = getUserById(userData.id);
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          // Se o usuário não for encontrado, redireciona para login
-          navigate('/login');
-        }
-      } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
-        navigate('/login');
-      }
-    } else {
-      // Se não houver usuário logado, redireciona para login
-      navigate('/login');
-    }
-  }, [navigate]);
+  // Se estiver carregando, mostrar indicador
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Se não estiver autenticado, redirecionar para login
+  if (!userProfile) {
+    navigate('/login');
+    return null;
+  }
+
+  // Verificar se o papel do usuário corresponde ao papel esperado
+  if (userProfile.role !== role) {
+    // Redireciona para o dashboard correto baseado no papel do usuário
+    const dashboardPaths: Record<UserRole, string> = {
+      admin: "/admin",
+      teacher: "/teacher",
+      student: "/student"
+    };
+    navigate(dashboardPaths[userProfile.role as UserRole]);
+    return null;
+  }
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -77,10 +79,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     }
   };
 
-  const handleLogout = () => {
-    // Remove o usuário atual do localStorage
-    localStorage.removeItem('currentUser');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
   };
 
   const adminLinks = [
@@ -148,18 +153,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     student: studentLinks
   }[role] || [];
 
-  // Verifica se o papel do usuário atual corresponde ao papel esperado
-  if (currentUser && currentUser.role !== role) {
-    // Redireciona para o dashboard correto baseado no papel do usuário
-    const dashboardPaths: Record<UserRole, string> = {
-      admin: "/admin",
-      teacher: "/teacher",
-      student: "/student"
-    };
-    navigate(dashboardPaths[currentUser.role]);
-    return null;
-  }
-
   return (
     <div className={cn(
       "min-h-screen flex flex-col bg-slate-50 text-slate-900",
@@ -204,14 +197,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </button>
             
             <div className="hidden sm:flex items-center gap-2">
-              {currentUser && (
+              {userProfile && (
                 <div className="flex items-center">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} />
-                    <AvatarFallback>{currentUser.name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={userProfile.avatar_url} alt={userProfile.name} />
+                    <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <span className="ml-2 text-sm font-medium hidden md:block dark:text-slate-300">
-                    {currentUser.name}
+                    {userProfile.name}
                   </span>
                 </div>
               )}
@@ -270,16 +263,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 ))}
               </ul>
               
-              {currentUser && (
+              {userProfile && (
                 <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-3 px-3 py-2">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} />
-                      <AvatarFallback>{currentUser.name?.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={userProfile.avatar_url} alt={userProfile.name} />
+                      <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">{currentUser.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{currentUser.email}</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{userProfile.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{userProfile.email}</p>
                     </div>
                   </div>
                 </div>
@@ -345,16 +338,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </ul>
             </div>
             
-            {currentUser && (
+            {userProfile && (
               <div className="absolute bottom-0 left-0 w-full p-4 border-t border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} />
-                    <AvatarFallback>{currentUser.name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={userProfile.avatar_url} alt={userProfile.name} />
+                    <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{currentUser.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{currentUser.email}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{userProfile.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{userProfile.email}</p>
                   </div>
                   <button
                     onClick={handleLogout}
