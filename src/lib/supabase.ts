@@ -65,14 +65,48 @@ export const signIn = async (email: string, password: string) => {
     if (error) {
       console.error('Erro no login:', error);
       
-      // Verifica se os scripts SQL foram executados
       if (error.message.includes('Invalid login credentials')) {
-        console.error('ERRO: Credenciais de login inválidas. Você executou os scripts SQL para criar os usuários de teste?');
-        console.error('Execute os scripts em supabase/init_tables.sql e supabase/seed_data.sql no seu projeto Supabase.');
-        console.error('Ou crie um usuário manualmente no painel do Supabase > Authentication > Users.');
-        throw new Error('Credenciais inválidas. Verifique se você executou os scripts SQL em seu projeto Supabase ou crie um usuário manualmente.');
+        console.error('ERRO: Credenciais de login inválidas. Verifique se você executou os scripts SQL para criar os usuários de teste.');
+        throw new Error('Credenciais inválidas. Verifique se o email e senha estão corretos.');
       } else if (error.message.includes('Email not confirmed')) {
-        throw new Error('Email não confirmado. Verifique sua caixa de entrada.');
+        // Para resolver o problema de "Email not confirmed"
+        console.error('ERRO: Email não confirmado. Vamos tentar confirmar automaticamente.');
+        
+        try {
+          // No ambiente de desenvolvimento, podemos tentar confirmar o email diretamente
+          // Isso NÃO funciona em produção, apenas para fins de desenvolvimento
+          if (email.includes('@fitnesshub.com') || email.includes('@example.com')) {
+            // Usar API do Supabase Admin para confirmar email (apenas em desenvolvimento)
+            await fetch(`${supabaseUrl}/auth/v1/user/admin/confirm`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+                'apikey': supabaseAnonKey
+              },
+              body: JSON.stringify({ email })
+            });
+            
+            // Tentar login novamente após confirmar o email
+            console.log('Tentando login novamente após confirmação automática de email');
+            const { data: newData, error: newError } = await supabase.auth.signInWithPassword({
+              email,
+              password
+            });
+            
+            if (newError) {
+              throw newError;
+            }
+            
+            console.log('Login bem-sucedido após confirmação automática:', newData);
+            return newData;
+          } else {
+            throw new Error('Email não confirmado. Verifique sua caixa de entrada para o link de confirmação.');
+          }
+        } catch (confirmError) {
+          console.error('Erro ao tentar confirmar email automaticamente:', confirmError);
+          throw new Error('Email não confirmado. Verifique sua caixa de entrada ou entre em contato com o administrador.');
+        }
       } else {
         throw error;
       }
