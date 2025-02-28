@@ -53,31 +53,10 @@ export const signIn = async (email: string, password: string) => {
     throw new Error('As variáveis de ambiente do Supabase não estão configuradas. Verifique seu arquivo .env.local');
   }
   
-  // Usa a senha correta conforme o seed_data.sql
-  const correctPassword = 'password'; // no script SQL, as senhas estão definidas como 'password'
-  
-  // Se estamos em modo de desenvolvimento e o email corresponde a um usuário de teste,
-  // podemos verificar se a senha está correta manualmente
-  if (
-    process.env.NODE_ENV !== 'production' &&
-    (email === 'admin@fitnesshub.com' || 
-     email === 'john@fitnesshub.com' || 
-     email === 'sarah@fitnesshub.com' ||
-     email === 'carlos@fitnesshub.com' ||
-     email === 'mike@example.com' ||
-     email === 'lisa@example.com' ||
-     email === 'alex@example.com' ||
-     email === 'emma@example.com')
-  ) {
-    console.log('Usuário de teste detectado');
-    
-    if (password !== correctPassword) {
-      console.error('Senha incorreta para usuário de teste');
-      throw new Error('Senha incorreta. A senha correta para os usuários de teste é: password');
-    }
-  }
-  
   try {
+    console.log('Usando Supabase Auth para login com:', email);
+    
+    // Tenta fazer login diretamente com Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -86,9 +65,12 @@ export const signIn = async (email: string, password: string) => {
     if (error) {
       console.error('Erro no login:', error);
       
-      // Mensagens mais detalhadas de erro
+      // Verifica se os scripts SQL foram executados
       if (error.message.includes('Invalid login credentials')) {
-        throw new Error('Credenciais inválidas. Verifique se o email e senha estão corretos.');
+        console.error('ERRO: Credenciais de login inválidas. Você executou os scripts SQL para criar os usuários de teste?');
+        console.error('Execute os scripts em supabase/init_tables.sql e supabase/seed_data.sql no seu projeto Supabase.');
+        console.error('Ou crie um usuário manualmente no painel do Supabase > Authentication > Users.');
+        throw new Error('Credenciais inválidas. Verifique se você executou os scripts SQL em seu projeto Supabase ou crie um usuário manualmente.');
       } else if (error.message.includes('Email not confirmed')) {
         throw new Error('Email não confirmado. Verifique sua caixa de entrada.');
       } else {

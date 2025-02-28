@@ -159,6 +159,24 @@ const Login = () => {
         </motion.div>
       )}
       
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-md text-sm">
+        <div className="flex items-start gap-2 mb-2">
+          <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <span className="font-medium">Configure seu banco de dados Supabase</span>
+        </div>
+        <p className="text-xs">
+          Você precisa executar os scripts SQL para criar tabelas e usuários de teste:
+        </p>
+        <ol className="list-decimal text-xs ml-6 mt-1 space-y-1">
+          <li>Vá para o painel do Supabase > Editor SQL</li>
+          <li>Execute primeiro o script <code className="bg-blue-100 px-1 rounded">supabase/init_tables.sql</code></li>
+          <li>Em seguida, execute <code className="bg-blue-100 px-1 rounded">supabase/seed_data.sql</code></li>
+        </ol>
+        <p className="text-xs mt-2">
+          Ou crie um usuário manualmente no painel Supabase > Authentication > Users
+        </p>
+      </div>
+      
       <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-4">
           <div>
