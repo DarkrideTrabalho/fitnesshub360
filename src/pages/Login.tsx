@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Eye, 
@@ -27,8 +27,23 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
+  // Verifica se as variáveis de ambiente estão definidas
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setError("Configuração do Supabase incompleta. Verifique as variáveis de ambiente.");
+      console.error("Variáveis de ambiente não configuradas:", {
+        VITE_SUPABASE_URL: supabaseUrl ? "Definido" : "Não definido",
+        VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? "Definido" : "Não definido"
+      });
+    }
+  }, []);
+  
   // Redireciona se já estiver autenticado
-  React.useEffect(() => {
+  useEffect(() => {
+    console.log("Estado do userProfile:", userProfile);
     if (userProfile) {
       // Redireciona com base no papel do usuário
       switch (userProfile.role) {
@@ -53,6 +68,7 @@ const Login = () => {
     setError("");
     
     try {
+      console.log("Tentando fazer login com:", email);
       await signIn(email, password);
       toast.success("Login realizado com sucesso!");
       // O redirecionamento será feito pelo useEffect acima
@@ -189,7 +205,16 @@ const Login = () => {
       
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
-          Para fins de demonstração, use uma das contas criadas no Supabase
+          Para fins de demonstração, use uma das contas criadas no Supabase:
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          admin@fitnesshub.com / password
+        </p>
+      </div>
+      
+      <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
+        <p className="text-xs text-blue-600">
+          <strong>Dica:</strong> Verifique se as variáveis de ambiente do Supabase estão configuradas no arquivo .env
         </p>
       </div>
     </AuthLayout>
