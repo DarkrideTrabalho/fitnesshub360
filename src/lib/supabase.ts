@@ -20,11 +20,30 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('VITE_SUPABASE_ANON_KEY=sua_chave_anon_do_supabase');
 }
 
-// Cria o cliente Supabase com verificação mais robusta
-export const supabase = createClient<Database>(
-  supabaseUrl || 'https://placeholder-url.supabase.co',  // URL de fallback para evitar erros
-  supabaseAnonKey || 'placeholder-key'  // Chave de fallback para evitar erros
-);
+// Cria o cliente Supabase - IMPORTANTE: não use fallbacks como "placeholder-url"
+// pois isso causa erros internos no Supabase
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey)
+  : (() => {
+      console.error('Cliente Supabase não inicializado devido a configurações ausentes');
+      // Retorna um objeto mock para evitar erros de runtime quando não há variáveis de ambiente
+      return {
+        auth: {
+          signInWithPassword: async () => ({ data: null, error: new Error('Supabase não configurado') }),
+          signOut: async () => ({ error: null }),
+          getSession: async () => ({ data: { session: null }, error: null }),
+          getUser: async () => ({ data: { user: null }, error: null }),
+          onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        },
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              single: async () => ({ data: null, error: null }),
+            }),
+          }),
+        }),
+      } as any;
+    })();
 
 // Helpers para autenticação
 export const signIn = async (email: string, password: string) => {

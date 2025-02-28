@@ -103,6 +103,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       console.log('AuthProvider: Tentando login com:', email);
+      
+      // Verifica se as variáveis de ambiente estão configuradas
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Variáveis de ambiente do Supabase não configuradas. Verifique o arquivo .env.local');
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 
         password 
