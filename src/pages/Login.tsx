@@ -6,7 +6,8 @@ import {
   EyeOff,
   User,
   Key,
-  AlertCircle
+  AlertCircle,
+  Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +22,12 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast: uiToast } = useToast();
   const { signIn, userProfile, isLoading: authLoading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@fitnesshub.com");  // Pré-preenchido para facilitar
+  const [password, setPassword] = useState("password");  // Pré-preenchido para facilitar
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [envError, setEnvError] = useState(false);
   
   // Verifica se as variáveis de ambiente estão definidas
   useEffect(() => {
@@ -33,18 +35,23 @@ const Login = () => {
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
     if (!supabaseUrl || !supabaseAnonKey) {
-      setError("Configuração do Supabase incompleta. Verifique as variáveis de ambiente.");
+      setEnvError(true);
+      setError("Configuração do Supabase incompleta. Verifique as variáveis de ambiente no arquivo .env.local");
       console.error("Variáveis de ambiente não configuradas:", {
         VITE_SUPABASE_URL: supabaseUrl ? "Definido" : "Não definido",
         VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? "Definido" : "Não definido"
       });
+    } else {
+      setEnvError(false);
+      console.log("Variáveis de ambiente configuradas corretamente");
     }
   }, []);
   
   // Redireciona se já estiver autenticado
   useEffect(() => {
-    console.log("Estado do userProfile:", userProfile);
+    console.log("Login: Estado do userProfile:", userProfile);
     if (userProfile) {
+      console.log("Login: Redirecionando usuário autenticado");
       // Redireciona com base no papel do usuário
       switch (userProfile.role) {
         case "admin":
@@ -64,16 +71,27 @@ const Login = () => {
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (envError) {
+      uiToast({
+        title: "Configuração incompleta",
+        description: "Configure as variáveis de ambiente antes de tentar fazer login",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     setError("");
     
     try {
-      console.log("Tentando fazer login com:", email);
+      console.log("Login: Tentando fazer login com:", email);
       await signIn(email, password);
+      console.log("Login: Chamada de signIn concluída com sucesso");
       toast.success("Login realizado com sucesso!");
       // O redirecionamento será feito pelo useEffect acima
     } catch (err: any) {
-      console.error("Erro ao fazer login:", err);
+      console.error("Login: Erro ao fazer login:", err);
       setError(err.message || "Credenciais inválidas");
       uiToast({
         title: "Falha no login",
@@ -115,6 +133,29 @@ const Login = () => {
         >
           <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
+        </motion.div>
+      )}
+      
+      {envError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-md text-sm text-amber-600"
+        >
+          <div className="flex items-start gap-2 mb-2">
+            <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span className="font-medium">Configure seu arquivo .env.local</span>
+          </div>
+          <p className="text-xs pl-6">
+            Crie um arquivo <code className="bg-amber-100 px-1 rounded">.env.local</code> na raiz do projeto com:
+          </p>
+          <pre className="bg-amber-100/50 p-2 rounded mt-2 text-xs overflow-auto">
+            VITE_SUPABASE_URL=sua_url_do_supabase<br/>
+            VITE_SUPABASE_ANON_KEY=sua_chave_anon_do_supabase
+          </pre>
+          <p className="text-xs mt-2 pl-6">
+            Encontre esses valores no painel do Supabase em "Project Settings" &gt; "API"
+          </p>
         </motion.div>
       )}
       
@@ -196,7 +237,7 @@ const Login = () => {
           <Button 
             type="submit" 
             className="w-full rounded-xl h-12 text-base font-medium bg-primary hover:bg-primary/90 transition-colors"
-            disabled={isLoading}
+            disabled={isLoading || envError}
           >
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
@@ -207,14 +248,22 @@ const Login = () => {
         <p className="text-sm text-gray-600">
           Para fins de demonstração, use uma das contas criadas no Supabase:
         </p>
-        <p className="text-xs text-gray-500 mt-1">
-          admin@fitnesshub.com / password
-        </p>
+        <div className="flex flex-col gap-1 mt-1">
+          <p className="text-xs text-gray-500">
+            <strong>Admin:</strong> admin@fitnesshub.com / password
+          </p>
+          <p className="text-xs text-gray-500">
+            <strong>Professor:</strong> john@fitnesshub.com / password
+          </p>
+          <p className="text-xs text-gray-500">
+            <strong>Aluno:</strong> mike@example.com / password
+          </p>
+        </div>
       </div>
       
       <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
         <p className="text-xs text-blue-600">
-          <strong>Dica:</strong> Verifique se as variáveis de ambiente do Supabase estão configuradas no arquivo .env
+          <strong>Nota Importante:</strong> Certifique-se de ter executado os scripts SQL para criar as tabelas e inserir os dados no Supabase, conforme descrito no arquivo README.md da pasta supabase.
         </p>
       </div>
     </AuthLayout>
