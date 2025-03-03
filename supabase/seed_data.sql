@@ -66,7 +66,7 @@ VALUES
   ('00000000-0000-0000-0000-000000000028', '00000000-0000-0000-0000-000000000006', CURRENT_DATE + interval '30 days', CURRENT_DATE + interval '40 days', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Definir senhas para os usuários (senha: password123)
+-- Definir senhas para os usuários (senha: password)
 UPDATE auth.users 
 SET encrypted_password = '$2a$10$rvQDLEXFknHQtCpQz.cEAu5HdJcFWR2U2qQPFMkMqA5KPxE8BxbOi' 
 WHERE email IN ('admin@fitnesshub.com', 'john@fitnesshub.com', 'sarah@fitnesshub.com', 'carlos@fitnesshub.com', 'mike@example.com', 'lisa@example.com', 'alex@example.com', 'emma@example.com');

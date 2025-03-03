@@ -28,6 +28,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [envError, setEnvError] = useState(false);
+  const [dbStatus, setDbStatus] = useState<"checking" | "error" | "success">("checking");
   
   // Verifica se as variáveis de ambiente estão definidas
   useEffect(() => {
@@ -44,6 +45,32 @@ const Login = () => {
     } else {
       setEnvError(false);
       console.log("Variáveis de ambiente configuradas corretamente");
+    }
+
+    // Verifica o status do banco de dados
+    const checkDbStatus = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase.from('admin_profiles').select('id').limit(1);
+        
+        if (error) {
+          console.error("Erro ao verificar o banco de dados:", error);
+          setDbStatus("error");
+          if (error.message.includes("does not exist")) {
+            setError("Tabelas do banco de dados não encontradas. Execute os scripts SQL conforme instruído abaixo.");
+          }
+        } else {
+          console.log("Banco de dados verificado com sucesso:", data);
+          setDbStatus("success");
+        }
+      } catch (e) {
+        console.error("Exceção ao verificar o banco de dados:", e);
+        setDbStatus("error");
+      }
+    };
+    
+    if (!envError) {
+      checkDbStatus();
     }
   }, []);
   
@@ -76,6 +103,15 @@ const Login = () => {
       uiToast({
         title: "Configuração incompleta",
         description: "Configure as variáveis de ambiente antes de tentar fazer login",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (dbStatus === "error") {
+      uiToast({
+        title: "Banco de dados não configurado",
+        description: "Execute os scripts SQL para criar as tabelas e usuários",
         variant: "destructive"
       });
       return;
@@ -133,6 +169,22 @@ const Login = () => {
         >
           <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
+        </motion.div>
+      )}
+      
+      {dbStatus === "error" && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-3 bg-red-50 border border-red-100 rounded-md text-sm text-red-600"
+        >
+          <div className="flex items-start gap-2 mb-2">
+            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span className="font-medium">Banco de dados não configurado!</span>
+          </div>
+          <p className="text-xs pl-6">
+            Você precisa executar os scripts SQL para criar as tabelas e usuários no Supabase.
+          </p>
         </motion.div>
       )}
       
@@ -255,7 +307,7 @@ const Login = () => {
           <Button 
             type="submit" 
             className="w-full rounded-xl h-12 text-base font-medium bg-primary hover:bg-primary/90 transition-colors"
-            disabled={isLoading || envError}
+            disabled={isLoading || envError || dbStatus === "error"}
           >
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
@@ -281,7 +333,7 @@ const Login = () => {
       
       <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
         <p className="text-xs text-blue-600">
-          <strong>Nota Importante:</strong> Certifique-se de ter executado os scripts SQL para criar as tabelas e inserir os dados no Supabase, conforme descrito no arquivo README.md da pasta supabase.
+          <strong>Nota Importante:</strong> A senha correta para todos os usuários é <code className="bg-blue-100 px-1 rounded">password</code> (e não "password123").
         </p>
       </div>
     </AuthLayout>

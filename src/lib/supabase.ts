@@ -40,8 +40,9 @@ export const signIn = async (email: string, password: string) => {
       console.error('Erro no login:', error);
       
       if (error.message.includes('Invalid login credentials')) {
-        console.error('ERRO: Credenciais de login inválidas. Verifique se você executou os scripts SQL para criar os usuários de teste.');
-        throw new Error('Credenciais inválidas. Verifique se o email e senha estão corretos.');
+        console.error('ERRO: Credenciais de login inválidas.');
+        console.error('NOTA: A senha correta é "password", não "password123"');
+        throw new Error('Credenciais inválidas. Verifique se o email e senha estão corretos. A senha é "password".');
       } else if (error.message.includes('Email not confirmed')) {
         // Para resolver o problema de "Email not confirmed"
         console.error('ERRO: Email não confirmado. Vamos tentar confirmar automaticamente.');
