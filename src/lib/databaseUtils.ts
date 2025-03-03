@@ -14,7 +14,7 @@ export const checkDatabaseTables = async () => {
       'classes',
       'enrollments',
       'vacations'
-    ];
+    ] as const;
     
     const results = await Promise.all(
       requiredTables.map(async (table) => {
@@ -79,13 +79,13 @@ export const checkDatabaseTables = async () => {
 export const checkUsersExist = async () => {
   try {
     // Verificamos se existem perfis de usuários nas tabelas de perfis
-    const tables = ['admin_profiles', 'teacher_profiles', 'student_profiles'];
+    const tables = ['admin_profiles', 'teacher_profiles', 'student_profiles'] as const;
     
     for (const table of tables) {
-      const { data, error } = await supabase.from(table).select('id, email').limit(5);
+      const { data, error } = await supabase.from(table).select('id').limit(5);
       
       if (!error && data && data.length > 0) {
-        console.log(`Usuários encontrados em ${table}:`, data.map(u => u.email).join(', '));
+        console.log(`Usuários encontrados em ${table}:`, data.length);
         return {
           status: 'ok',
           message: `Usuários encontrados em ${table}`,
