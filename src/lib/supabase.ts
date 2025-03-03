@@ -23,11 +23,36 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Cria o cliente Supabase
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
+// Função para testar a conexão com o Supabase
+export const testSupabaseConnection = async () => {
+  try {
+    console.log('Testando conexão com o Supabase...');
+    const { data, error } = await supabase.from('admin_profiles').select('id').limit(1);
+    
+    if (error) {
+      console.error('Erro ao testar conexão com o Supabase:', error);
+      return false;
+    }
+    
+    console.log('Conexão com o Supabase bem-sucedida:', data);
+    return true;
+  } catch (error) {
+    console.error('Exceção ao testar conexão com o Supabase:', error);
+    return false;
+  }
+};
+
 // Helpers para autenticação
 export const signIn = async (email: string, password: string) => {
   console.log('Tentando fazer login com:', email);
   
   try {
+    // Verifique a conexão com o Supabase primeiro
+    const isConnected = await testSupabaseConnection();
+    if (!isConnected) {
+      throw new Error('Não foi possível conectar ao Supabase. Verifique sua conexão com a internet e as configurações do Supabase.');
+    }
+    
     console.log('Usando Supabase Auth para login com:', email);
     
     // Tenta fazer login diretamente com Supabase Auth
@@ -41,8 +66,9 @@ export const signIn = async (email: string, password: string) => {
       
       if (error.message.includes('Invalid login credentials')) {
         console.error('ERRO: Credenciais de login inválidas.');
+        console.error('Certifique-se de que o SQL de criação de usuários foi executado no Supabase.');
         console.error('NOTA: A senha correta é "password", não "password123"');
-        throw new Error('Credenciais inválidas. Verifique se o email e senha estão corretos. A senha é "password".');
+        throw new Error('Credenciais inválidas. Verifique se o email e senha estão corretos e se o script SQL foi executado no Supabase.');
       } else if (error.message.includes('Email not confirmed')) {
         // Para resolver o problema de "Email not confirmed"
         console.error('ERRO: Email não confirmado. Vamos tentar confirmar automaticamente.');
@@ -51,16 +77,18 @@ export const signIn = async (email: string, password: string) => {
           // No ambiente de desenvolvimento, podemos tentar confirmar o email diretamente
           // Isso NÃO funciona em produção, apenas para fins de desenvolvimento
           if (email.includes('@fitnesshub.com') || email.includes('@example.com')) {
-            // Usar API do Supabase Admin para confirmar email (apenas em desenvolvimento)
-            await fetch(`${supabaseUrl}/auth/v1/user/admin/confirm`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseAnonKey}`,
-                'apikey': supabaseAnonKey
-              },
-              body: JSON.stringify({ email })
-            });
+            console.log('Tentando confirmar email automaticamente para desenvolvimento...');
+            
+            // Usar autenticação administrativa para confirmar o email
+            const { data: adminAuthData, error: adminAuthError } = await supabase.auth.admin.updateUserById(
+              '00000000-0000-0000-0000-000000000001', // ID do usuário admin
+              { email_confirmation: true }
+            );
+            
+            if (adminAuthError) {
+              console.error('Erro ao confirmar email administrativamente:', adminAuthError);
+              throw new Error('Não foi possível confirmar o email automaticamente. Execute o script SQL novamente para garantir que os emails estejam confirmados.');
+            }
             
             // Tentar login novamente após confirmar o email
             console.log('Tentando login novamente após confirmação automática de email');
@@ -80,7 +108,7 @@ export const signIn = async (email: string, password: string) => {
           }
         } catch (confirmError) {
           console.error('Erro ao tentar confirmar email automaticamente:', confirmError);
-          throw new Error('Email não confirmado. Verifique sua caixa de entrada ou entre em contato com o administrador.');
+          throw new Error('Email não confirmado. Execute o script SQL novamente para garantir que os emails estejam confirmados.');
         }
       } else {
         throw error;

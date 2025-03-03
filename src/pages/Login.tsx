@@ -7,7 +7,8 @@ import {
   User,
   Key,
   AlertCircle,
-  Info
+  Info,
+  Database
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import AuthLayout from "@/components/AuthLayout";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase, testSupabaseConnection } from "@/lib/supabase";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,12 +30,13 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [envError, setEnvError] = useState(false);
-  const [dbStatus, setDbStatus] = useState<"checking" | "error" | "success">("checking");
+  const [dbStatus, setDbStatus] = useState<"checking" | "error" | "success" | "no_tables">("checking");
+  const [connectionStatus, setConnectionStatus] = useState<"checking" | "error" | "success">("checking");
   
   // Verifica se as variáveis de ambiente estão definidas
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || `https://ndagmedfmfqwvkahdlhf.supabase.co`;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWdtZWRmbWZxd3ZrYWhkbGhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA2ODY0MTcsImV4cCI6MjA1NjI2MjQxN30.RJb-4o2h91uTQ166vi4nNDFXiIWqr6xSCz4fC3OS2yk`;
     
     if (!supabaseUrl || !supabaseAnonKey) {
       setEnvError(true);
@@ -47,32 +50,71 @@ const Login = () => {
       console.log("Variáveis de ambiente configuradas corretamente");
     }
 
+    // Verifica a conexão com o Supabase
+    const checkSupabaseConnection = async () => {
+      try {
+        const isConnected = await testSupabaseConnection();
+        setConnectionStatus(isConnected ? "success" : "error");
+        
+        if (!isConnected) {
+          setError("Não foi possível conectar ao Supabase. Verifique sua conexão com a internet.");
+          return;
+        }
+      } catch (e) {
+        console.error("Erro ao verificar conexão:", e);
+        setConnectionStatus("error");
+        setError("Erro ao conectar ao Supabase. Verifique sua conexão com a internet.");
+      }
+    };
+    
     // Verifica o status do banco de dados
     const checkDbStatus = async () => {
       try {
-        const { supabase } = await import('@/lib/supabase');
-        const { data, error } = await supabase.from('admin_profiles').select('id').limit(1);
+        // Primeiro, verifica se podemos conectar ao Supabase
+        await checkSupabaseConnection();
         
-        if (error) {
-          console.error("Erro ao verificar o banco de dados:", error);
-          setDbStatus("error");
-          if (error.message.includes("does not exist")) {
-            setError("Tabelas do banco de dados não encontradas. Execute os scripts SQL conforme instruído abaixo.");
-          }
-        } else {
-          console.log("Banco de dados verificado com sucesso:", data);
-          setDbStatus("success");
+        if (connectionStatus === "error") {
+          return;
         }
+        
+        // Verifica se as tabelas já existem
+        const { data: adminProfiles, error: adminError } = await supabase
+          .from('admin_profiles')
+          .select('id')
+          .limit(1);
+        
+        // Verifica se existem usuários no auth.users
+        const { count, error: authError } = await supabase
+          .from('auth.users')
+          .select('*', { count: 'exact', head: true });
+        
+        if (adminError || authError) {
+          console.error("Erro ao verificar o banco de dados:", adminError || authError);
+          setDbStatus("error");
+          setError("Erro ao verificar o banco de dados. Execute os scripts SQL conforme instruído abaixo.");
+          return;
+        }
+        
+        if (!adminProfiles || adminProfiles.length === 0) {
+          console.log("Banco de dados verificado, mas tabelas vazias ou não existem:", adminProfiles);
+          setDbStatus("no_tables");
+          setError("As tabelas do banco de dados estão vazias ou não existem. Execute os scripts SQL conforme instruído abaixo.");
+          return;
+        }
+        
+        console.log("Banco de dados verificado com sucesso:", adminProfiles);
+        setDbStatus("success");
       } catch (e) {
         console.error("Exceção ao verificar o banco de dados:", e);
         setDbStatus("error");
+        setError("Erro ao verificar o banco de dados. Execute os scripts SQL conforme instruído abaixo.");
       }
     };
     
     if (!envError) {
       checkDbStatus();
     }
-  }, []);
+  }, [connectionStatus]);
   
   // Redireciona se já estiver autenticado
   useEffect(() => {
@@ -108,7 +150,7 @@ const Login = () => {
       return;
     }
     
-    if (dbStatus === "error") {
+    if (dbStatus === "error" || dbStatus === "no_tables") {
       uiToast({
         title: "Banco de dados não configurado",
         description: "Execute os scripts SQL para criar as tabelas e usuários",
@@ -172,7 +214,7 @@ const Login = () => {
         </motion.div>
       )}
       
-      {dbStatus === "error" && (
+      {connectionStatus === "error" && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -180,9 +222,30 @@ const Login = () => {
         >
           <div className="flex items-start gap-2 mb-2">
             <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span className="font-medium">Erro de conexão com o Supabase!</span>
+          </div>
+          <p className="text-xs pl-6">
+            Não foi possível conectar ao banco de dados. Verifique sua conexão com a internet.
+          </p>
+        </motion.div>
+      )}
+      
+      {(dbStatus === "error" || dbStatus === "no_tables") && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-3 bg-red-50 border border-red-100 rounded-md text-sm text-red-600"
+        >
+          <div className="flex items-start gap-2 mb-2">
+            <Database className="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span className="font-medium">Banco de dados não configurado!</span>
           </div>
           <p className="text-xs pl-6">
+            {dbStatus === "no_tables" 
+              ? "As tabelas do banco de dados estão vazias ou não existem." 
+              : "Ocorreu um erro ao verificar o banco de dados."}
+          </p>
+          <p className="text-xs pl-6 mt-1">
             Você precisa executar os scripts SQL para criar as tabelas e usuários no Supabase.
           </p>
         </motion.div>
@@ -307,7 +370,7 @@ const Login = () => {
           <Button 
             type="submit" 
             className="w-full rounded-xl h-12 text-base font-medium bg-primary hover:bg-primary/90 transition-colors"
-            disabled={isLoading || envError || dbStatus === "error"}
+            disabled={isLoading || envError || dbStatus === "error" || dbStatus === "no_tables" || connectionStatus === "error"}
           >
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
