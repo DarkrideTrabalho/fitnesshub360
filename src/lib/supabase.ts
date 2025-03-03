@@ -3,12 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
 // Obtém as variáveis de ambiente
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || `https://ndagmedfmfqwvkahdlhf.supabase.co`;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWdtZWRmbWZxd3ZrYWhkbGhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA2ODY0MTcsImV4cCI6MjA1NjI2MjQxN30.RJb-4o2h91uTQ166vi4nNDFXiIWqr6xSCz4fC3OS2yk`;
 
 // Exibe informações detalhadas sobre a configuração para depuração
 console.log('====== CONFIGURAÇÃO SUPABASE ======');
-console.log('URL do Supabase:', supabaseUrl || 'NÃO DEFINIDO');
+console.log('URL do Supabase:', supabaseUrl);
 console.log('Chave Anon do Supabase:', supabaseAnonKey ? 'DEFINIDA (ocultada por segurança)' : 'NÃO DEFINIDA');
 console.log('===================================');
 
@@ -20,38 +20,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('VITE_SUPABASE_ANON_KEY=sua_chave_anon_do_supabase');
 }
 
-// Cria o cliente Supabase - IMPORTANTE: não use fallbacks como "placeholder-url"
-// pois isso causa erros internos no Supabase
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient<Database>(supabaseUrl, supabaseAnonKey)
-  : (() => {
-      console.error('Cliente Supabase não inicializado devido a configurações ausentes');
-      // Retorna um objeto mock para evitar erros de runtime quando não há variáveis de ambiente
-      return {
-        auth: {
-          signInWithPassword: async () => ({ data: null, error: new Error('Supabase não configurado') }),
-          signOut: async () => ({ error: null }),
-          getSession: async () => ({ data: { session: null }, error: null }),
-          getUser: async () => ({ data: { user: null }, error: null }),
-          onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-        },
-        from: () => ({
-          select: () => ({
-            eq: () => ({
-              single: async () => ({ data: null, error: null }),
-            }),
-          }),
-        }),
-      } as any;
-    })();
+// Cria o cliente Supabase
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Helpers para autenticação
 export const signIn = async (email: string, password: string) => {
   console.log('Tentando fazer login com:', email);
-  
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('As variáveis de ambiente do Supabase não estão configuradas. Verifique seu arquivo .env.local');
-  }
   
   try {
     console.log('Usando Supabase Auth para login com:', email);

@@ -154,7 +154,7 @@ const Login = () => {
             VITE_SUPABASE_ANON_KEY=sua_chave_anon_do_supabase
           </pre>
           <p className="text-xs mt-2 pl-6">
-            Encontre esses valores no painel do Supabase em "Project Settings" &gt; "API"
+            Encontre esses valores no painel do Supabase em "Project Settings" {`>`} "API"
           </p>
         </motion.div>
       )}
@@ -168,12 +168,12 @@ const Login = () => {
           Você precisa executar os scripts SQL para criar tabelas e usuários de teste:
         </p>
         <ol className="list-decimal text-xs ml-6 mt-1 space-y-1">
-          <li>Vá para o painel do Supabase > Editor SQL</li>
+          <li>Vá para o painel do Supabase {`>`} Editor SQL</li>
           <li>Execute primeiro o script <code className="bg-blue-100 px-1 rounded">supabase/init_tables.sql</code></li>
           <li>Em seguida, execute <code className="bg-blue-100 px-1 rounded">supabase/seed_data.sql</code></li>
         </ol>
         <p className="text-xs mt-2">
-          Ou crie um usuário manualmente no painel Supabase > Authentication > Users
+          Ou crie um usuário manualmente no painel Supabase {`>`} Authentication {`>`} Users
         </p>
       </div>
       
