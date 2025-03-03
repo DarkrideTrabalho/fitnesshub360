@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
@@ -79,30 +78,9 @@ export const signIn = async (email: string, password: string) => {
           if (email.includes('@fitnesshub.com') || email.includes('@example.com')) {
             console.log('Tentando confirmar email automaticamente para desenvolvimento...');
             
-            // Usar autenticação administrativa para confirmar o email
-            const { data: adminAuthData, error: adminAuthError } = await supabase.auth.admin.updateUserById(
-              '00000000-0000-0000-0000-000000000001', // ID do usuário admin
-              { email_confirmation: true }
-            );
-            
-            if (adminAuthError) {
-              console.error('Erro ao confirmar email administrativamente:', adminAuthError);
-              throw new Error('Não foi possível confirmar o email automaticamente. Execute o script SQL novamente para garantir que os emails estejam confirmados.');
-            }
-            
-            // Tentar login novamente após confirmar o email
-            console.log('Tentando login novamente após confirmação automática de email');
-            const { data: newData, error: newError } = await supabase.auth.signInWithPassword({
-              email,
-              password
-            });
-            
-            if (newError) {
-              throw newError;
-            }
-            
-            console.log('Login bem-sucedido após confirmação automática:', newData);
-            return newData;
+            // Remover a tentativa de usar a função admin que não está disponível
+            console.error('Erro ao confirmar email: função administrativa não disponível');
+            throw new Error('Email não confirmado. Execute o script SQL novamente para garantir que os emails estejam confirmados.');
           } else {
             throw new Error('Email não confirmado. Verifique sua caixa de entrada para o link de confirmação.');
           }
