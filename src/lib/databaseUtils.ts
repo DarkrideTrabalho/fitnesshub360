@@ -65,7 +65,7 @@ export const checkDatabaseTables = async () => {
       message: 'Banco de dados verificado com sucesso.',
       details: results
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao verificar tabelas do banco de dados:', error);
     return {
       status: 'error',
@@ -100,7 +100,7 @@ export const checkUsersExist = async () => {
       message: 'Nenhum usuário encontrado. Execute o script SQL de seed_data.sql para criar usuários de teste.',
       details: null
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao verificar existência de usuários:', error);
     return {
       status: 'error',
@@ -112,8 +112,9 @@ export const checkUsersExist = async () => {
 
 // Função para verificar as variáveis de ambiente
 export const checkEnvironmentVariables = () => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  // Using direct values instead of environment variables
+  const supabaseUrl = 'https://bvkjuqizqetxbgojvtnk.supabase.co';
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2a2p1cWl6cWV0eGJnb2p2dG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMjA3MjksImV4cCI6MjA1NjU5NjcyOX0.gVLSgClCuapCFSp4x4xQDtZdwBfKDkPGWF026aJ6MgI';
   
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Variáveis de ambiente do Supabase não configuradas corretamente');

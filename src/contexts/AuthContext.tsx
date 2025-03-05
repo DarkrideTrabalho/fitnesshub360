@@ -25,18 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('AuthProvider: Inicializando');
     
-    // Verifica se as variáveis de ambiente estão configuradas
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('AuthProvider: Variáveis de ambiente do Supabase não configuradas');
-      toast.error('Configuração do Supabase não encontrada');
-      setIsLoading(false);
-      return;
-    }
-
-    // Obtém a sessão atual e configura um listener para mudanças
+    // Inicializa a autenticação
     const initializeAuth = async () => {
       try {
         console.log('AuthProvider: Obtendo sessão inicial');
@@ -103,14 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       console.log('AuthProvider: Tentando login com:', email);
-      
-      // Verifica se as variáveis de ambiente estão configuradas
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Variáveis de ambiente do Supabase não configuradas. Verifique o arquivo .env.local');
-      }
       
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 

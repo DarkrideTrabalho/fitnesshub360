@@ -1,23 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
-// Obtém as variáveis de ambiente
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || `https://ndagmedfmfqwvkahdlhf.supabase.co`;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWdtZWRmbWZxd3ZrYWhkbGhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA2ODY0MTcsImV4cCI6MjA1NjI2MjQxN30.RJb-4o2h91uTQ166vi4nNDFXiIWqr6xSCz4fC3OS2yk`;
+// Use the values from the connected Supabase project
+const supabaseUrl = 'https://bvkjuqizqetxbgojvtnk.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2a2p1cWl6cWV0eGJnb2p2dG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMjA3MjksImV4cCI6MjA1NjU5NjcyOX0.gVLSgClCuapCFSp4x4xQDtZdwBfKDkPGWF026aJ6MgI';
 
 // Exibe informações detalhadas sobre a configuração para depuração
 console.log('====== CONFIGURAÇÃO SUPABASE ======');
 console.log('URL do Supabase:', supabaseUrl);
 console.log('Chave Anon do Supabase:', supabaseAnonKey ? 'DEFINIDA (ocultada por segurança)' : 'NÃO DEFINIDA');
 console.log('===================================');
-
-// Verifica se as variáveis de ambiente estão definidas
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('ERRO: As variáveis de ambiente do Supabase não estão configuradas corretamente.');
-  console.error('Certifique-se de ter um arquivo .env.local ou .env na raiz do projeto com:');
-  console.error('VITE_SUPABASE_URL=sua_url_do_supabase');
-  console.error('VITE_SUPABASE_ANON_KEY=sua_chave_anon_do_supabase');
-}
 
 // Cria o cliente Supabase
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
