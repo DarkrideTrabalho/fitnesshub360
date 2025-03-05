@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,6 +18,7 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
   const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +32,6 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
       }
       
       console.log('Login: Attempting to login with:', email);
-      // Log without revealing password value but show its length for debugging
       console.log('Login attempt with password length:', password.length);
       
       await signIn(email, password);
@@ -46,7 +46,7 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
         });
       } else if (error.message.includes('Email not confirmed')) {
         toast.error('Email not confirmed', {
-          description: 'Run the SQL script again to confirm email addresses.'
+          description: 'The database has been updated to confirm all email addresses.'
         });
       } else {
         toast.error('Login error', {
@@ -56,6 +56,10 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -83,13 +87,28 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
         
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="pr-10"
+            />
+            <button 
+              type="button"
+              className="absolute inset-y-0 right-0 flex items-center px-3"
+              onClick={toggleShowPassword}
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-gray-500" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-500" />
+              )}
+            </button>
+          </div>
         </div>
         
         <Button 
