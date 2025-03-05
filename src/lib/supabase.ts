@@ -5,16 +5,16 @@ import type { Database } from './database.types';
 const supabaseUrl = 'https://bvkjuqizqetxbgojvtnk.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2a2p1cWl6cWV0eGJnb2p2dG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMjA3MjksImV4cCI6MjA1NjU5NjcyOX0.gVLSgClCuapCFSp4x4xQDtZdwBfKDkPGWF026aJ6MgI';
 
-// Exibe informações detalhadas sobre a configuração para depuração
+// Display detailed information about the configuration for debugging
 console.log('====== CONFIGURAÇÃO SUPABASE ======');
 console.log('URL do Supabase:', supabaseUrl);
 console.log('Chave Anon do Supabase:', supabaseAnonKey ? 'DEFINIDA (ocultada por segurança)' : 'NÃO DEFINIDA');
 console.log('===================================');
 
-// Cria o cliente Supabase
+// Create the Supabase client
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Função para testar a conexão com o Supabase
+// Function to test the connection with Supabase
 export const testSupabaseConnection = async () => {
   try {
     console.log('Testando conexão com o Supabase...');
@@ -33,12 +33,12 @@ export const testSupabaseConnection = async () => {
   }
 };
 
-// Helpers para autenticação
+// Modified signIn function with better error handling
 export const signIn = async (email: string, password: string) => {
   console.log('Tentando fazer login com:', email);
   
   try {
-    // Verifique a conexão com o Supabase primeiro
+    // Verify the connection with Supabase first
     const isConnected = await testSupabaseConnection();
     if (!isConnected) {
       throw new Error('Não foi possível conectar ao Supabase. Verifique sua conexão com a internet e as configurações do Supabase.');
@@ -46,7 +46,14 @@ export const signIn = async (email: string, password: string) => {
     
     console.log('Usando Supabase Auth para login com:', email);
     
-    // Tenta fazer login diretamente com Supabase Auth
+    // Add debugging to see if the login attempt data is correct
+    console.log('Login attempt data:', { 
+      email, 
+      passwordLength: password ? password.length : 0,
+      isPasswordEmpty: !password
+    });
+    
+    // Try to sign in directly with Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -57,29 +64,15 @@ export const signIn = async (email: string, password: string) => {
       
       if (error.message.includes('Invalid login credentials')) {
         console.error('ERRO: Credenciais de login inválidas.');
-        console.error('Certifique-se de que o SQL de criação de usuários foi executado no Supabase.');
-        console.error('NOTA: A senha correta é "password", não "password123"');
-        throw new Error('Credenciais inválidas. Verifique se o email e senha estão corretos e se o script SQL foi executado no Supabase.');
-      } else if (error.message.includes('Email not confirmed')) {
-        // Para resolver o problema de "Email not confirmed"
-        console.error('ERRO: Email não confirmado. Vamos tentar confirmar automaticamente.');
+        console.error('Verifique se:', 
+          '\n1. O email está correto (admin@fitnesshub.com)', 
+          '\n2. A senha está correta (password - sem aspas)',
+          '\n3. O SQL de criação de usuários foi executado no Supabase e funcionou corretamente.');
         
-        try {
-          // No ambiente de desenvolvimento, podemos tentar confirmar o email diretamente
-          // Isso NÃO funciona em produção, apenas para fins de desenvolvimento
-          if (email.includes('@fitnesshub.com') || email.includes('@example.com')) {
-            console.log('Tentando confirmar email automaticamente para desenvolvimento...');
-            
-            // Remover a tentativa de usar a função admin que não está disponível
-            console.error('Erro ao confirmar email: função administrativa não disponível');
-            throw new Error('Email não confirmado. Execute o script SQL novamente para garantir que os emails estejam confirmados.');
-          } else {
-            throw new Error('Email não confirmado. Verifique sua caixa de entrada para o link de confirmação.');
-          }
-        } catch (confirmError) {
-          console.error('Erro ao tentar confirmar email automaticamente:', confirmError);
-          throw new Error('Email não confirmado. Execute o script SQL novamente para garantir que os emails estejam confirmados.');
-        }
+        throw new Error('Credenciais inválidas. Por favor, verifique se o email e senha estão corretos.');
+      } else if (error.message.includes('Email not confirmed')) {
+        console.error('ERRO: Email não confirmado.');
+        throw new Error('Email não confirmado. Execute o script SQL novamente para garantir que os emails estejam confirmados.');
       } else {
         throw error;
       }
@@ -87,12 +80,13 @@ export const signIn = async (email: string, password: string) => {
     
     console.log('Login bem-sucedido:', data);
     return data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Exceção durante o login:', error);
     throw error;
   }
 };
 
+// Other helpers remain the same
 export const signOut = async () => {
   try {
     const { error } = await supabase.auth.signOut();

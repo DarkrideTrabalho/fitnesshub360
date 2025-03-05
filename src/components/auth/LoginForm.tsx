@@ -31,6 +31,9 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
       }
       
       console.log('Login: Attempting to login with:', email);
+      // Log without revealing password value but show its length for debugging
+      console.log('Login attempt with password length:', password.length);
+      
       await signIn(email, password);
       toast.success('Login successful!');
     } catch (error: any) {
@@ -39,7 +42,7 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
       
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Invalid credentials', {
-          description: 'Please check your email and password. If this is your first time, make sure the SQL script has been run.'
+          description: 'Please check your email and password. Default admin: admin@fitnesshub.com, password: password'
         });
       } else if (error.message.includes('Email not confirmed')) {
         toast.error('Email not confirmed', {
