@@ -23,7 +23,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null
-          id: string
+          id?: string
           name?: string | null
           updated_at?: string | null
           user_id: string
@@ -62,7 +62,7 @@ export type Database = {
           description?: string | null
           end_time: string
           enrolled_count?: number | null
-          id: string
+          id?: string
           image_url?: string | null
           max_capacity?: number | null
           name: string
@@ -110,7 +110,7 @@ export type Database = {
           class_id?: string | null
           created_at?: string | null
           enrolled_at?: string | null
-          id: string
+          id?: string
           student_id?: string | null
           updated_at?: string | null
         }
@@ -156,7 +156,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null
-          id: string
+          id?: string
           last_check_in?: string | null
           membership_type?: string | null
           name?: string | null
@@ -192,7 +192,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null
-          id: string
+          id?: string
           name?: string | null
           on_vacation?: boolean | null
           specialties?: string[] | null
@@ -214,41 +214,33 @@ export type Database = {
       }
       vacations: {
         Row: {
-          approved: boolean | null
           created_at: string | null
           end_date: string
           id: string
+          reason: string | null
           start_date: string
-          teacher_id: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          approved?: boolean | null
           created_at?: string | null
           end_date: string
-          id: string
+          id?: string
+          reason?: string | null
           start_date: string
-          teacher_id?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          approved?: boolean | null
           created_at?: string | null
           end_date?: string
           id?: string
+          reason?: string | null
           start_date?: string
-          teacher_id?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "vacations_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
