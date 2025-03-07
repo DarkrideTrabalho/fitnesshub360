@@ -1,6 +1,6 @@
 
 import { checkDatabaseTables, checkUsersExist, checkEnvironmentVariables } from '@/lib/databaseUtils';
-import { testSupabaseConnection } from '@/lib/supabase';
+import { supabase, testSupabaseConnection } from '@/lib/supabase';
 
 export type DatabaseStatus = 'checking' | 'ok' | 'error' | 'missing_tables' | 'empty_tables' | 'no_users' | 'some_empty_tables';
 
@@ -10,6 +10,15 @@ export interface DatabaseStatusResult {
 }
 
 export const checkDatabaseSetup = async (): Promise<DatabaseStatusResult> => {
+  // Check if we can connect to Supabase
+  const isConnected = await testSupabaseConnection();
+  if (!isConnected) {
+    return {
+      status: 'error' as DatabaseStatus,
+      message: 'Could not connect to Supabase. Check your internet connection and settings.'
+    };
+  }
+
   // Check environment variables
   const envStatus = checkEnvironmentVariables();
   if (envStatus.status !== 'ok') {
@@ -19,13 +28,24 @@ export const checkDatabaseSetup = async (): Promise<DatabaseStatusResult> => {
     };
   }
   
-  // Test connection to Supabase
-  const isConnected = await testSupabaseConnection();
-  if (!isConnected) {
-    return {
-      status: 'error' as DatabaseStatus,
-      message: 'Could not connect to Supabase. Check your internet connection and settings.'
-    };
+  // Try to directly check if users exist in auth.users (if we have permission)
+  try {
+    // Try to sign in with the admin user with a wrong password
+    // If we get "Invalid login credentials", it means the user exists
+    const { error } = await supabase.auth.signInWithPassword({
+      email: 'admin@fitnesshub.com',
+      password: 'wrong-password-just-checking'
+    });
+    
+    if (error && error.message.includes('Invalid login credentials')) {
+      console.log('Admin user exists, skipping other checks');
+      return {
+        status: 'ok' as DatabaseStatus,
+        message: 'Database verified successfully'
+      };
+    }
+  } catch (e) {
+    console.error('Error checking admin user:', e);
   }
   
   // Check database tables

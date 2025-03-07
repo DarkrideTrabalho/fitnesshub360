@@ -28,10 +28,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       try {
         // Test database connection first
-        await testSupabaseConnection();
+        const isConnected = await testSupabaseConnection();
+        
+        if (!isConnected) {
+          console.error('AuthProvider: Failed to connect to Supabase');
+          toast.error('Database connection failed', {
+            description: 'Could not connect to the database. Please check your internet connection.'
+          });
+          setIsLoading(false);
+          return;
+        }
         
         console.log('AuthProvider: Getting initial session');
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('AuthProvider: Error getting session:', sessionError);
+          toast.error('Authentication error', {
+            description: 'Could not retrieve session information.'
+          });
+          setIsLoading(false);
+          return;
+        }
+        
         console.log('AuthProvider: Initial session:', session ? 'Found' : 'Not found');
         
         setSession(session);
@@ -152,7 +171,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthProvider: Attempting login with:', email);
       
       // Test connection before attempting login
-      await testSupabaseConnection();
+      const isConnected = await testSupabaseConnection();
+      if (!isConnected) {
+        throw new Error('Cannot connect to the database. Please check your connection.');
+      }
       
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 
@@ -176,7 +198,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       console.log('AuthProvider: Attempting to sign out');
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('AuthProvider: Error during sign out:', error);
+        throw error;
+      }
+      
       console.log('AuthProvider: Sign out successful');
       // The auth state listener will handle updating state
     } catch (error) {

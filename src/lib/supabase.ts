@@ -9,16 +9,35 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Display detailed information about the configuration for debugging
 console.log('====== SUPABASE CONFIGURATION ======');
 console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Anon Key:', supabaseAnonKey ? 'SET (hidden for security)' : 'NOT SET');
+console.log('Supabase Anon Key (present):', !!supabaseAnonKey);
 console.log('===================================');
 
 // Create the Supabase client
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    storageKey: 'fitnesshub-auth-token'
+  }
+});
 
 // Function to test the connection with Supabase
 export const testSupabaseConnection = async () => {
   try {
     console.log('Testing Supabase connection...');
+    
+    // First try to get the current session to test auth connection
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Error getting current session:', sessionError);
+      } else {
+        console.log('Session check successful', sessionData.session ? 'Session exists' : 'No session');
+      }
+    } catch (sessionErr) {
+      console.error('Exception getting session:', sessionErr);
+    }
     
     // Try a simple query to check if the connection works
     const { data, error } = await supabase
@@ -63,6 +82,26 @@ export const getCurrentUser = async () => {
   } catch (error) {
     console.error('Exception getting current user:', error);
     throw error;
+  }
+};
+
+// Function to check if a user with specified email exists
+export const checkUserExists = async (email: string) => {
+  try {
+    // Try to sign in with an invalid password, which will tell us if the user exists
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: 'invalid-test-password'
+    });
+    
+    // If we get a specific error message, the user exists
+    const userExists = error?.message.includes('Invalid login credentials');
+    
+    console.log(`User check for ${email}: ${userExists ? 'Exists' : 'Does not exist'}`);
+    return userExists;
+  } catch (error) {
+    console.error('Error checking if user exists:', error);
+    return false;
   }
 };
 
