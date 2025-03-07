@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase, getUserProfile } from '@/lib/supabase';
+import { supabase, testSupabaseConnection } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
 import { toast } from 'sonner';
 
@@ -27,6 +27,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const initializeAuth = async () => {
       try {
+        // Test database connection first
+        await testSupabaseConnection();
+        
         console.log('AuthProvider: Getting initial session');
         const { data: { session } } = await supabase.auth.getSession();
         console.log('AuthProvider: Initial session:', session ? 'Found' : 'Not found');
@@ -44,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('AuthProvider: Error initializing authentication:', error);
+        toast.error('Failed to initialize authentication');
         setIsLoading(false);
       }
     };
@@ -77,19 +81,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('AuthProvider: Fetching profile for userId:', userId);
       setIsLoading(true);
-      const profile = await getUserProfile(userId);
-      console.log('AuthProvider: Profile retrieved:', profile);
       
-      if (!profile) {
-        console.error('AuthProvider: No profile found for user:', userId);
-        toast.error('No profile found for your account. Please contact an administrator.');
-      } else {
-        setUserProfile(profile);
+      // First check if admin profile exists
+      const { data: adminProfile, error: adminError } = await supabase
+        .from('admin_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (adminError && adminError.code !== 'PGRST116') {
+        console.error('AuthProvider: Error fetching admin profile:', adminError);
       }
+      
+      if (adminProfile) {
+        console.log('AuthProvider: Admin profile found:', adminProfile);
+        setUserProfile({ ...adminProfile, role: 'admin' });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Then check for teacher profile
+      const { data: teacherProfile, error: teacherError } = await supabase
+        .from('teacher_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (teacherError && teacherError.code !== 'PGRST116') {
+        console.error('AuthProvider: Error fetching teacher profile:', teacherError);
+      }
+      
+      if (teacherProfile) {
+        console.log('AuthProvider: Teacher profile found:', teacherProfile);
+        setUserProfile({ ...teacherProfile, role: 'teacher' });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Finally check for student profile
+      const { data: studentProfile, error: studentError } = await supabase
+        .from('student_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (studentError && studentError.code !== 'PGRST116') {
+        console.error('AuthProvider: Error fetching student profile:', studentError);
+      }
+      
+      if (studentProfile) {
+        console.log('AuthProvider: Student profile found:', studentProfile);
+        setUserProfile({ ...studentProfile, role: 'student' });
+        setIsLoading(false);
+        return;
+      }
+      
+      console.error('AuthProvider: No profile found for user:', userId);
+      toast.error('No profile found for your account. Please contact an administrator.');
+      setIsLoading(false);
     } catch (error) {
       console.error('AuthProvider: Error fetching user profile:', error);
       toast.error('Error loading your profile. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -98,6 +150,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       console.log('AuthProvider: Attempting login with:', email);
+      
+      // Test connection before attempting login
+      await testSupabaseConnection();
       
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 

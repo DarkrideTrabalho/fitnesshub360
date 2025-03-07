@@ -33,6 +33,7 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
       
       console.log('Login: Attempting to login with:', email);
       console.log('Login attempt with password length:', password.length);
+      console.log('Login attempt with actual password:', password); // For debugging, remove in production
       
       await signIn(email, password);
       toast.success('Login successful!');
