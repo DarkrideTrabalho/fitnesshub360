@@ -184,6 +184,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Cannot connect to the database. Please check your connection.');
       }
       
+      // Debug login attempt
+      console.log(`AuthProvider: Login attempt with: ${trimmedEmail}, password length: ${trimmedPassword.length}`);
+      
+      // Try with direct API call first for debugging
+      try {
+        console.log('Trying direct API login...');
+        const response = await fetch(`${supabase.auth.url}/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabase.supabaseKey,
+          },
+          body: JSON.stringify({
+            email: trimmedEmail,
+            password: trimmedPassword,
+          }),
+        });
+        
+        const result = await response.json();
+        console.log('Direct API login result:', result);
+      } catch (directApiError) {
+        console.error('Error with direct API login:', directApiError);
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email: trimmedEmail, 
         password: trimmedPassword

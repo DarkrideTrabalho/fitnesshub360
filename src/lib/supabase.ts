@@ -68,15 +68,21 @@ export const testSupabaseConnection = async () => {
         console.error('Error testing Supabase connection with admin_profiles:', error);
         
         // Try another table in case admin_profiles doesn't exist yet
-        const { data: data2, error: error2 } = await supabase.rpc('get_service_role');
-        
-        if (error2) {
-          console.error('Error testing Supabase service role:', error2);
-          return false;
+        try {
+          const { data: data2, error: error2 } = await supabase.rpc('get_service_role');
+          
+          if (error2) {
+            console.error('Error testing Supabase service role:', error2);
+            return false;
+          }
+          
+          console.log('Supabase service role connection successful');
+          return true;
+        } catch (rpcError) {
+          console.error('Exception testing RPC connection:', rpcError);
         }
         
-        console.log('Supabase service role connection successful');
-        return true;
+        return false;
       }
       
       console.log('Supabase connection successful with admin_profiles table');

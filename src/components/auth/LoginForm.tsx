@@ -101,6 +101,25 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
       
       console.log(`Attempting login with email: "${trimmedEmail}" and password length: ${trimmedPassword.length}`);
       
+      // Add this debug output
+      console.log('Admin login test with hardcoded credentials...');
+      try {
+        const testResult = await supabase.auth.signInWithPassword({
+          email: 'admin@fitnesshub.com',
+          password: 'password'
+        });
+        
+        if (testResult.error) {
+          console.log('Test login failed:', testResult.error.message);
+        } else {
+          console.log('Test login succeeded!', testResult.data);
+          // Sign out to try with actual credentials
+          await supabase.auth.signOut();
+        }
+      } catch (testErr) {
+        console.error('Exception during test login:', testErr);
+      }
+      
       await signIn(trimmedEmail, trimmedPassword);
       toast.success('Login successful!');
     } catch (error: any) {
