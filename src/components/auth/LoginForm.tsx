@@ -20,28 +20,47 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [debugMode, setDebugMode] = useState(false);
+  const [debugMode, setDebugMode] = useState(true); // Enable debug mode by default
+  const [connectionStatus, setConnectionStatus] = useState<string>('Checking connection...');
 
   useEffect(() => {
-    // Check if user exists
-    const checkUser = async () => {
+    // Test the connection when component mounts
+    const checkConnection = async () => {
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: 'admin@fitnesshub.com',
-          password: 'wrongpassword'
-        });
+        console.log('Testing Supabase connection...');
+        const isConnected = await testSupabaseConnection();
+        setConnectionStatus(isConnected 
+          ? 'Connected to Supabase ✅' 
+          : 'Failed to connect to Supabase ❌');
         
-        // If we get an error about invalid credentials, it means the user exists
-        console.log('Debug check user response:', error ? 'User exists (auth error)' : 'Unknown state');
+        if (isConnected) {
+          // Check if user exists
+          try {
+            const { error } = await supabase.auth.signInWithPassword({
+              email: 'admin@fitnesshub.com',
+              password: 'wrongpassword'
+            });
+            
+            // If we get specific error, user exists
+            if (error && error.message.includes('Invalid login credentials')) {
+              console.log('Admin user exists in auth system');
+              setConnectionStatus(prev => prev + ' | Admin user exists ✅');
+            } else {
+              console.log('Admin user might not exist', error?.message);
+              setConnectionStatus(prev => prev + ' | Admin user not found ❌');
+            }
+          } catch (e) {
+            console.error('Error checking admin user:', e);
+          }
+        }
       } catch (error) {
-        console.error('Error checking user:', error);
+        console.error('Error testing connection:', error);
+        setConnectionStatus('Error testing connection ❌');
       }
     };
     
-    if (isDbReady) {
-      checkUser();
-    }
-  }, [isDbReady]);
+    checkConnection();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +95,13 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
         }
       }
       
-      await signIn(email, password);
+      // Force trim the email and password
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+      
+      console.log(`Attempting login with email: "${trimmedEmail}" and password length: ${trimmedPassword.length}`);
+      
+      await signIn(trimmedEmail, trimmedPassword);
       toast.success('Login successful!');
     } catch (error: any) {
       console.error('Login: Error during login:', error);
@@ -115,6 +140,17 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Login Error</AlertTitle>
           <AlertDescription>{loginError}</AlertDescription>
+        </Alert>
+      )}
+      
+      {debugMode && (
+        <Alert className="mb-4 bg-slate-100">
+          <AlertTitle className="text-xs font-mono">Debug Information</AlertTitle>
+          <AlertDescription className="text-xs font-mono">
+            <p>Connection: {connectionStatus}</p>
+            <p>Database ready: {isDbReady ? 'Yes ✅' : 'No ❌'}</p>
+            <p>Auth loading: {authLoading ? 'Yes' : 'No'}</p>
+          </AlertDescription>
         </Alert>
       )}
       
@@ -170,27 +206,17 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
           ) : 'Sign in'}
         </Button>
         
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              className="w-full text-xs"
-              onClick={toggleDebugMode}
-            >
-              {debugMode ? 'Disable Debug Mode' : 'Enable Debug Mode'}
-            </Button>
-            
-            {debugMode && (
-              <div className="mt-2 p-2 bg-slate-50 rounded text-xs font-mono">
-                <p>Email: {email}</p>
-                <p>Password: {password ? '•'.repeat(password.length) : ''} (length: {password.length})</p>
-                <p>DB Ready: {isDbReady ? 'Yes' : 'No'}</p>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="mt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            className="w-full text-xs"
+            onClick={toggleDebugMode}
+          >
+            {debugMode ? 'Disable Debug Mode' : 'Enable Debug Mode'}
+          </Button>
+        </div>
       </div>
     </form>
   );

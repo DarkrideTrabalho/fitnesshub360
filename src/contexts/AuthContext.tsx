@@ -170,6 +170,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('AuthProvider: Attempting login with:', email);
       
+      if (!email || !password) {
+        throw new Error('Email and password are required');
+      }
+      
+      // Trim the email and password
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+      
       // Test connection before attempting login
       const isConnected = await testSupabaseConnection();
       if (!isConnected) {
@@ -177,8 +185,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
+        email: trimmedEmail, 
+        password: trimmedPassword
       });
       
       if (error) {

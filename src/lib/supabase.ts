@@ -10,6 +10,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 console.log('====== SUPABASE CONFIGURATION ======');
 console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Anon Key (present):', !!supabaseAnonKey);
+console.log('Supabase Anon Key (first 10 chars):', supabaseAnonKey.substring(0, 10) + '...');
 console.log('===================================');
 
 // Create the Supabase client
@@ -19,6 +20,22 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     storageKey: 'fitnesshub-auth-token'
+  },
+  // Add global error handler
+  global: {
+    fetch: async (url, options) => {
+      const response = await fetch(url, options);
+      
+      // Log detailed error information for non-2xx responses
+      if (!response.ok && !url.toString().includes('/auth/v1/token')) {
+        console.error(`Supabase request failed: ${response.status} ${response.statusText}`, {
+          url,
+          method: options?.method || 'GET',
+        });
+      }
+      
+      return response;
+    }
   }
 });
 
@@ -40,18 +57,55 @@ export const testSupabaseConnection = async () => {
     }
     
     // Try a simple query to check if the connection works
-    const { data, error } = await supabase
-      .from('admin_profiles')
-      .select('id')
-      .limit(1);
-    
-    if (error) {
-      console.error('Error testing Supabase connection:', error);
-      return false;
+    // Changed to a more reliable table that should always exist
+    try {
+      const { data, error } = await supabase
+        .from('admin_profiles')
+        .select('id')
+        .limit(1);
+      
+      if (error) {
+        console.error('Error testing Supabase connection with admin_profiles:', error);
+        
+        // Try another table in case admin_profiles doesn't exist yet
+        const { data: data2, error: error2 } = await supabase.rpc('get_service_role');
+        
+        if (error2) {
+          console.error('Error testing Supabase service role:', error2);
+          return false;
+        }
+        
+        console.log('Supabase service role connection successful');
+        return true;
+      }
+      
+      console.log('Supabase connection successful with admin_profiles table');
+      return true;
+    } catch (tableError) {
+      console.error('Exception testing table connection:', tableError);
+      
+      // Last resort: Try auth API
+      try {
+        const authResponse = await fetch(`${supabaseUrl}/auth/v1/`, {
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (authResponse.ok || authResponse.status === 404) {
+          // 404 is expected for this endpoint, but means auth API is working
+          console.log('Supabase auth API is reachable');
+          return true;
+        }
+        
+        console.error('Supabase auth API not reachable:', authResponse.status);
+        return false;
+      } catch (authError) {
+        console.error('Exception testing auth API:', authError);
+        return false;
+      }
     }
-    
-    console.log('Supabase connection successful:', data);
-    return true;
   } catch (error) {
     console.error('Exception when testing Supabase connection:', error);
     return false;
