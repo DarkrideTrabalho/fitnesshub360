@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { 
@@ -28,6 +28,11 @@ interface DashboardLayoutProps {
   role: UserRole;
 }
 
+// Create a flag for development mode in localStorage
+const isDevelopmentMode = () => {
+  return localStorage.getItem('devModeActive') === 'true';
+};
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ 
   children,
   role = "admin" 
@@ -37,6 +42,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { userProfile, signOut, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [devMode, setDevMode] = useState(isDevelopmentMode());
+
+  useEffect(() => {
+    // Check for development mode flag when component mounts
+    setDevMode(isDevelopmentMode());
+  }, []);
 
   // Se estiver carregando, mostrar indicador
   if (isLoading) {
@@ -47,21 +58,30 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     );
   }
 
-  // Se não estiver autenticado, redirecionar para login
-  if (!userProfile) {
+  // Se não estiver autenticado E não estiver no modo desenvolvimento, redirecionar para login
+  if (!userProfile && !devMode) {
     navigate('/login');
     return null;
   }
 
+  // Para modo de desenvolvimento, criar um perfil fictício de admin
+  const effectiveProfile = userProfile || (devMode ? {
+    id: 'dev-user',
+    name: 'Desenvolvimento',
+    email: 'admin@fitnesshub.com',
+    role: role as UserRole,
+    avatar_url: ''
+  } : null);
+
   // Verificar se o papel do usuário corresponde ao papel esperado
-  if (userProfile.role !== role) {
+  if (effectiveProfile && effectiveProfile.role !== role && !devMode) {
     // Redireciona para o dashboard correto baseado no papel do usuário
     const dashboardPaths: Record<UserRole, string> = {
       admin: "/admin",
       teacher: "/teacher",
       student: "/student"
     };
-    navigate(dashboardPaths[userProfile.role as UserRole]);
+    navigate(dashboardPaths[effectiveProfile.role as UserRole]);
     return null;
   }
 
@@ -81,7 +101,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      // Clear dev mode flag
+      localStorage.removeItem('devModeActive');
+      setDevMode(false);
+      
+      if (userProfile) {
+        await signOut();
+      }
       navigate('/login');
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
@@ -174,6 +200,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </button>
             <span className="text-xl font-bold text-slate-900 dark:text-white">
               Fitness<span className="text-primary">Hub</span>
+              {devMode && <small className="ml-2 bg-amber-200 text-amber-800 px-2 py-0.5 text-xs rounded">DEV</small>}
             </span>
           </div>
           
@@ -197,14 +224,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </button>
             
             <div className="hidden sm:flex items-center gap-2">
-              {userProfile && (
+              {effectiveProfile && (
                 <div className="flex items-center">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={userProfile.avatar_url} alt={userProfile.name} />
-                    <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={effectiveProfile.avatar_url} alt={effectiveProfile.name} />
+                    <AvatarFallback>{effectiveProfile.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <span className="ml-2 text-sm font-medium hidden md:block dark:text-slate-300">
-                    {userProfile.name}
+                    {effectiveProfile.name}
                   </span>
                 </div>
               )}

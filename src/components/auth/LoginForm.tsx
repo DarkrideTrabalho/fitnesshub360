@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +25,6 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
   const [connectionStatus, setConnectionStatus] = useState<string>('Checking connection...');
 
   useEffect(() => {
-    // Test the connection when component mounts
     const checkConnection = async () => {
       try {
         console.log('Testing Supabase connection...');
@@ -36,15 +34,12 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
           : 'Failed to connect to Supabase ❌');
         
         if (isConnected) {
-          // Check if user exists
           try {
-            // Just checking if the admin user exists, we expect this to fail with invalid credentials
             const { error } = await supabase.auth.signInWithPassword({
               email: 'admin@fitnesshub.com',
               password: 'wrongpassword'
             });
             
-            // If we get specific error about invalid credentials, user exists
             if (error && error.message.includes('Invalid login credentials')) {
               console.log('Admin user exists in auth system');
               setConnectionStatus(prev => prev + ' | Admin user exists ✅');
@@ -65,12 +60,10 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
     checkConnection();
   }, []);
 
-  // Função para fazer bypass do login (temporário para desenvolvimento)
   const handleBypassLogin = () => {
-    // Simulando um login bem-sucedido para desenvolvimento
+    localStorage.setItem('devModeActive', 'true');
     toast.success('Login de desenvolvimento ativado!');
     console.log('Usando login de desenvolvimento (bypass)');
-    // Redireciona para a página de admin (ou qualquer outra página de dashboard)
     navigate('/admin');
   };
 
@@ -80,12 +73,10 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
     setIsLoading(true);
     
     try {
-      // Check database status
       if (!isDbReady) {
         throw new Error('Database is not ready. Please check the configuration.');
       }
       
-      // Test connection before login
       const isConnected = await testSupabaseConnection();
       if (!isConnected) {
         throw new Error('Cannot connect to the database. Please check your internet connection and settings.');
@@ -93,7 +84,6 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
       
       console.log('Login: Attempting to login with:', email);
       
-      // Force trim the email and password
       const trimmedEmail = email.trim();
       const trimmedPassword = password.trim();
       
@@ -204,7 +194,6 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
           ) : 'Sign in'}
         </Button>
 
-        {/* Botão adicional para bypass do login (para desenvolvimento) */}
         <Button 
           type="button" 
           variant="outline"
