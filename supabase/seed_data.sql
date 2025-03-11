@@ -41,15 +41,15 @@ VALUES
   ('00000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000012', 'Emma Johnson', 'emma@example.com', 'Premium', now() - interval '1 day', 'https://api.dicebear.com/7.x/avataaars/svg?seed=emma')
 ON CONFLICT (id) DO NOTHING;
 
--- Inserir dados para aulas
+-- Inserir dados para aulas (com enrolled_count inicializado como 0)
 INSERT INTO classes (id, name, description, category, teacher_id, date, start_time, end_time, max_capacity, enrolled_count, image_url)
 VALUES 
-  ('00000000-0000-0000-0000-000000000017', 'Morning Yoga', 'Start your day with a refreshing yoga session', 'Yoga', '00000000-0000-0000-0000-000000000006', CURRENT_DATE + interval '1 day', '07:00', '08:00', 15, 2, 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?ixlib=rb-4.0.3'),
-  ('00000000-0000-0000-0000-000000000018', 'HIIT Workout', 'High-intensity interval training for maximum calorie burn', 'HIIT', '00000000-0000-0000-0000-000000000007', CURRENT_DATE + interval '1 day', '12:00', '13:00', 12, 1, 'https://images.unsplash.com/photo-1534258936925-c58bed479fcb'),
-  ('00000000-0000-0000-0000-000000000019', 'Strength Training', 'Build muscle and strength with our comprehensive program', 'Strength', '00000000-0000-0000-0000-000000000008', CURRENT_DATE + interval '1 day', '18:00', '19:30', 10, 1, 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2')
+  ('00000000-0000-0000-0000-000000000017', 'Morning Yoga', 'Start your day with a refreshing yoga session', 'Yoga', '00000000-0000-0000-0000-000000000006', CURRENT_DATE + interval '1 day', '07:00', '08:00', 15, 0, 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?ixlib=rb-4.0.3'),
+  ('00000000-0000-0000-0000-000000000018', 'HIIT Workout', 'High-intensity interval training for maximum calorie burn', 'HIIT', '00000000-0000-0000-0000-000000000007', CURRENT_DATE + interval '1 day', '12:00', '13:00', 12, 0, 'https://images.unsplash.com/photo-1534258936925-c58bed479fcb'),
+  ('00000000-0000-0000-0000-000000000019', 'Strength Training', 'Build muscle and strength with our comprehensive program', 'Strength', '00000000-0000-0000-0000-000000000008', CURRENT_DATE + interval '1 day', '18:00', '19:30', 10, 0, 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2')
 ON CONFLICT (id) DO NOTHING;
 
--- Inserir dados para matrículas
+-- Inserir dados para matrículas (os triggers atualizarão enrolled_count automaticamente)
 INSERT INTO enrollments (id, class_id, student_id, enrolled_at, attended)
 VALUES 
   ('00000000-0000-0000-0000-000000000022', '00000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000013', now() - interval '5 days', false),

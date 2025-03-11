@@ -1,48 +1,44 @@
+# FitnessHub - Configuração do Banco de Dados
 
-# Instruções para Configurar o Supabase
+Este repositório contém os scripts de configuração para a estrutura do banco de dados do aplicativo FitnessHub no Supabase.
 
-Este diretório contém scripts SQL para configurar e popular o banco de dados Supabase para o FitnessHub. Siga as instruções abaixo para configurar seu projeto Supabase corretamente.
+## Estrutura de Arquivos
 
-## 1. Estrutura de Tabelas
+- `config.toml` - Configuração do projeto Supabase
+- `init_tables.sql` - Script para criar a estrutura inicial do banco de dados (tabelas, triggers, índices)
+- `seed_data.sql` - Script para popular o banco de dados com dados iniciais
+- `check_integrity.sql` - Script para verificar e corrigir a integridade dos dados
 
-O arquivo `init_tables.sql` contém todas as definições das tabelas, políticas RLS (Row Level Security) e funções necessárias para o aplicativo. Execute este script primeiro.
+## Como Usar
 
-## 2. Dados Iniciais
+1. Configure o projeto no Supabase e atualize o `project_id` no arquivo `config.toml`
+2. Execute o script `init_tables.sql` para criar a estrutura do banco de dados
+3. Execute o script `seed_data.sql` para popular o banco de dados com dados iniciais
+4. Use o script `check_integrity.sql` periodicamente para verificar e corrigir a integridade dos dados
 
-O arquivo `seed_data.sql` contém dados de exemplo para que você possa começar a usar o aplicativo imediatamente. Execute este script depois de configurar as tabelas.
+## Modelo de Dados
 
-## Como Executar os Scripts no Supabase
+O sistema possui as seguintes entidades principais:
 
-1. Acesse o painel de controle do seu projeto Supabase
-2. Clique em "SQL Editor" no menu lateral
-3. Crie um novo script (New Query)
-4. Copie e cole o conteúdo de `init_tables.sql`
-5. Execute o script (Run)
-6. Repita os passos 3-5 para o arquivo `seed_data.sql`
+- **Admin Profiles**: Perfis de administradores do sistema
+- **Teacher Profiles**: Perfis de professores com suas especialidades
+- **Student Profiles**: Perfis de alunos com detalhes de associação
+- **Classes**: Aulas oferecidas pelos professores
+- **Enrollments**: Matrículas dos alunos nas aulas
+- **Vacations**: Períodos de férias dos professores
 
-## Usuários de Teste
+## Recursos Implementados
 
-Após executar os scripts, os seguintes usuários estarão disponíveis para teste:
+- Triggers para atualização automática do timestamp `updated_at`
+- Triggers para manter o contador de matrículas (`enrolled_count`) sincronizado
+- Índices para melhorar a performance de consultas comuns
+- Restrições de integridade para garantir a validade dos dados
+- Seed data para desenvolvimento e testes
 
-**Admin:**
-- Email: admin@fitnesshub.com
-- Senha: password
+## Credenciais de Teste
 
-**Professores:**
-- Email: john@fitnesshub.com
-- Email: sarah@fitnesshub.com
-- Email: carlos@fitnesshub.com
-- Senha: password (mesma para todos)
+Todos os usuários de teste têm a senha: `password`
 
-**Alunos:**
-- Email: mike@example.com
-- Email: lisa@example.com
-- Email: alex@example.com
-- Email: emma@example.com
-- Senha: password (mesma para todos)
-
-## Notas Importantes
-
-- As senhas usadas nestes scripts são apenas para fins de demonstração. Em um ambiente de produção, use senhas fortes e únicas.
-- As políticas RLS estão configuradas para proteger os dados, permitindo que os usuários vejam apenas os dados que têm permissão para acessar.
-- A função `handle_new_user` cria automaticamente um perfil de aluno para novos usuários que se registram.
+- Admin: admin@fitnesshub.com
+- Professores: john@fitnesshub.com, sarah@fitnesshub.com, carlos@fitnesshub.com
+- Alunos: mike@example.com, lisa@example.com, alex@example.com, emma@example.com
