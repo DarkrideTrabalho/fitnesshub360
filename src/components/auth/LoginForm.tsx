@@ -8,6 +8,7 @@ import { AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, testSupabaseConnection } from '@/lib/supabase';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   isDbReady: boolean;
@@ -15,8 +16,9 @@ interface LoginFormProps {
 
 export const LoginForm = ({ isDbReady }: LoginFormProps) => {
   const { signIn, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('admin@fitnesshub.com');
-  const [password, setPassword] = useState('password');
+  const [password, setPassword] = useState('123456');
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -63,6 +65,15 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
     checkConnection();
   }, []);
 
+  // Função para fazer bypass do login (temporário para desenvolvimento)
+  const handleBypassLogin = () => {
+    // Simulando um login bem-sucedido para desenvolvimento
+    toast.success('Login de desenvolvimento ativado!');
+    console.log('Usando login de desenvolvimento (bypass)');
+    // Redireciona para a página de admin (ou qualquer outra página de dashboard)
+    navigate('/admin');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
@@ -96,7 +107,7 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
       
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Invalid credentials', {
-          description: 'Please check your email and password. Default admin: admin@fitnesshub.com, password: password'
+          description: 'Please check your email and password. Default admin: admin@fitnesshub.com, password: 123456'
         });
       } else if (error.message.includes('Email not confirmed')) {
         toast.error('Email not confirmed', {
@@ -191,6 +202,16 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
               Signing in...
             </>
           ) : 'Sign in'}
+        </Button>
+
+        {/* Botão adicional para bypass do login (para desenvolvimento) */}
+        <Button 
+          type="button" 
+          variant="outline"
+          className="w-full mt-2"
+          onClick={handleBypassLogin}
+        >
+          Entrar em Modo Desenvolvimento (Bypass Login)
         </Button>
         
         <div className="mt-4">
