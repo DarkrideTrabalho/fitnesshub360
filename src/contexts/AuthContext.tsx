@@ -190,11 +190,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Try with direct API call first for debugging
       try {
         console.log('Trying direct API login...');
-        const response = await fetch(`${supabase.auth.url}/token?grant_type=password`, {
+        // Fix: Don't use protected Supabase client properties directly
+        const supabaseUrl = 'https://bvkjuqizqetxbgojvtnk.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2a2p1cWl6cWV0eGJnb2p2dG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwMjA3MjksImV4cCI6MjA1NjU5NjcyOX0.gVLSgClCuapCFSp4x4xQDtZdwBfKDkPGWF026aJ6MgI';
+        
+        const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': supabase.supabaseKey,
+            'apikey': supabaseAnonKey,
           },
           body: JSON.stringify({
             email: trimmedEmail,
