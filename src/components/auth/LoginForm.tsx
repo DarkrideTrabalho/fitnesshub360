@@ -36,12 +36,13 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
         if (isConnected) {
           // Check if user exists
           try {
+            // Just checking if the admin user exists, we expect this to fail with invalid credentials
             const { error } = await supabase.auth.signInWithPassword({
               email: 'admin@fitnesshub.com',
               password: 'wrongpassword'
             });
             
-            // If we get specific error, user exists
+            // If we get specific error about invalid credentials, user exists
             if (error && error.message.includes('Invalid login credentials')) {
               console.log('Admin user exists in auth system');
               setConnectionStatus(prev => prev + ' | Admin user exists ✅');
@@ -81,44 +82,11 @@ export const LoginForm = ({ isDbReady }: LoginFormProps) => {
       
       console.log('Login: Attempting to login with:', email);
       
-      if (debugMode) {
-        // Get session first
-        const { data: sessionData } = await supabase.auth.getSession();
-        console.log('Current session before login:', sessionData);
-        
-        // Try to get user info
-        try {
-          const { data: userData, error: userError } = await supabase.auth.getUser();
-          console.log('Current user before login:', userData, userError);
-        } catch (err) {
-          console.log('Error getting user:', err);
-        }
-      }
-      
       // Force trim the email and password
       const trimmedEmail = email.trim();
       const trimmedPassword = password.trim();
       
       console.log(`Attempting login with email: "${trimmedEmail}" and password length: ${trimmedPassword.length}`);
-      
-      // Add this debug output
-      console.log('Admin login test with hardcoded credentials...');
-      try {
-        const testResult = await supabase.auth.signInWithPassword({
-          email: 'admin@fitnesshub.com',
-          password: 'password'
-        });
-        
-        if (testResult.error) {
-          console.log('Test login failed:', testResult.error.message);
-        } else {
-          console.log('Test login succeeded!', testResult.data);
-          // Sign out to try with actual credentials
-          await supabase.auth.signOut();
-        }
-      } catch (testErr) {
-        console.error('Exception during test login:', testErr);
-      }
       
       await signIn(trimmedEmail, trimmedPassword);
       toast.success('Login successful!');
