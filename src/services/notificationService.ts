@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface CreateNotificationParams {
   userId?: string;
@@ -15,7 +15,7 @@ export const createNotification = async ({
   type
 }: CreateNotificationParams) => {
   try {
-    // Try to use RPC first (this avoids TypeScript errors)
+    // Try to use RPC first
     const { error: rpcError } = await supabase.rpc('create_notification', {
       p_user_id: userId,
       p_title: title,
@@ -26,14 +26,16 @@ export const createNotification = async ({
     if (rpcError) {
       console.error("Error creating notification using RPC:", rpcError);
       
-      // Fallback to direct insert if RPC fails - use any type to bypass TypeScript restrictions
-      const { error: insertError } = await supabase.from('notifications' as any).insert({
-        user_id: userId,
-        title,
-        message,
-        type,
-        read: false
-      });
+      // Fallback to direct insert if RPC fails
+      const { error: insertError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title,
+          message,
+          type,
+          read: false
+        } as any);
       
       if (insertError) {
         console.error("Error creating notification:", insertError);
@@ -50,7 +52,7 @@ export const createNotification = async ({
 
 export const markNotificationAsRead = async (notificationId: string) => {
   try {
-    // Try to use RPC first (this avoids TypeScript errors)
+    // Try to use RPC first
     const { error: rpcError } = await supabase.rpc('mark_notification_read', {
       p_notification_id: notificationId
     });
@@ -58,10 +60,10 @@ export const markNotificationAsRead = async (notificationId: string) => {
     if (rpcError) {
       console.error("Error marking notification as read using RPC:", rpcError);
       
-      // Fallback to direct update if RPC fails - use any type to bypass TypeScript restrictions
+      // Fallback to direct update if RPC fails
       const { error: updateError } = await supabase
-        .from('notifications' as any)
-        .update({ read: true })
+        .from('notifications')
+        .update({ read: true } as any)
         .eq('id', notificationId);
       
       if (updateError) {
@@ -79,9 +81,8 @@ export const markNotificationAsRead = async (notificationId: string) => {
 
 export const getUserNotifications = async (userId: string) => {
   try {
-    // Use any type to bypass TypeScript restrictions
     const { data, error } = await supabase
-      .from('notifications' as any)
+      .from('notifications')
       .select('*')
       .or(`user_id.eq.${userId},user_id.is.null`)
       .order('created_at', { ascending: false });
@@ -97,3 +98,6 @@ export const getUserNotifications = async (userId: string) => {
     return [];
   }
 };
+
+// Use the "as any" type assertion to work around TypeScript limitations
+// when accessing tables that might not be fully defined in the type system
