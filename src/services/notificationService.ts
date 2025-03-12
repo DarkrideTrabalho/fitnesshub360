@@ -1,19 +1,31 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
-export interface CreateNotificationParams {
-  userId?: string;
+export interface Notification {
+  id: string;
+  user_id: string | null;
   title: string;
   message: string;
   type: string;
+  read: boolean;
+  created_at: string;
 }
 
-export const createNotification = async ({
-  userId,
-  title,
-  message,
-  type
-}: CreateNotificationParams) => {
+/**
+ * Creates a new notification
+ * 
+ * @param userId User ID or null for system-wide notifications
+ * @param title Notification title
+ * @param message Notification message
+ * @param type Notification type (e.g., 'info', 'warning', 'error')
+ * @returns Promise that resolves when notification is created
+ */
+export const createNotification = async (
+  userId: string | null,
+  title: string,
+  message: string,
+  type: string
+): Promise<void> => {
   try {
     // Try to use RPC first
     const { error: rpcError } = await supabase.rpc('create_notification', {
@@ -22,9 +34,10 @@ export const createNotification = async ({
       p_message: message,
       p_type: type
     });
-
+    
+    // If RPC fails (e.g., function doesn't exist), fallback to direct insert
     if (rpcError) {
-      console.error("Error creating notification using RPC:", rpcError);
+      console.warn("RPC failed, falling back to direct insert:", rpcError.message);
       
       // Fallback to direct insert if RPC fails
       const { error: insertError } = await supabase
@@ -39,47 +52,55 @@ export const createNotification = async ({
       
       if (insertError) {
         console.error("Error creating notification:", insertError);
-        throw insertError;
+        throw new Error(`Failed to create notification: ${insertError.message}`);
       }
     }
-    
-    return { success: true };
   } catch (error) {
-    console.error("Failed to create notification:", error);
-    return { success: false, error };
+    console.error("Error in createNotification:", error);
+    throw error;
   }
 };
 
-export const markNotificationAsRead = async (notificationId: string) => {
+/**
+ * Marks a notification as read
+ * 
+ * @param notificationId ID of the notification to mark as read
+ * @returns Promise that resolves when notification is marked as read
+ */
+export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
   try {
     // Try to use RPC first
-    const { error: rpcError } = await supabase.rpc('mark_notification_read', {
+    const { error: rpcError } = await supabase.rpc('mark_notification_as_read', {
       p_notification_id: notificationId
     });
-
+    
+    // If RPC fails, fallback to direct update
     if (rpcError) {
-      console.error("Error marking notification as read using RPC:", rpcError);
+      console.warn("RPC failed, falling back to direct update:", rpcError.message);
       
-      // Fallback to direct update if RPC fails
       const { error: updateError } = await supabase
         .from('notifications')
-        .update({ read: true } as any)
-        .eq('id', notificationId);
+        .update({ read: true })
+        .eq('id', notificationId) as any;
       
       if (updateError) {
         console.error("Error marking notification as read:", updateError);
-        throw updateError;
+        throw new Error(`Failed to mark notification as read: ${updateError.message}`);
       }
     }
-    
-    return { success: true };
   } catch (error) {
-    console.error("Failed to mark notification as read:", error);
-    return { success: false, error };
+    console.error("Error in markNotificationAsRead:", error);
+    throw error;
   }
 };
 
-export const getUserNotifications = async (userId: string) => {
+/**
+ * Gets all notifications for a user, including system-wide notifications
+ * 
+ * @param userId User ID
+ * @returns Promise that resolves to an array of notifications
+ */
+export const getUserNotifications = async (userId: string): Promise<Notification[]> => {
   try {
     const { data, error } = await supabase
       .from('notifications')
@@ -89,15 +110,12 @@ export const getUserNotifications = async (userId: string) => {
     
     if (error) {
       console.error("Error fetching notifications:", error);
-      throw error;
+      throw new Error(`Failed to fetch notifications: ${error.message}`);
     }
     
     return data || [];
   } catch (error) {
-    console.error("Failed to fetch notifications:", error);
-    return [];
+    console.error("Error in getUserNotifications:", error);
+    throw error;
   }
 };
-
-// Use the "as any" type assertion to work around TypeScript limitations
-// when accessing tables that might not be fully defined in the type system
