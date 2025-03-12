@@ -17,7 +17,7 @@ export const createNotification = async ({
   try {
     // Try to use RPC first
     const { error: rpcError } = await supabase.rpc('create_notification', {
-      p_user_id: userId,
+      p_user_id: userId || null,
       p_title: title,
       p_message: message,
       p_type: type
@@ -29,13 +29,13 @@ export const createNotification = async ({
       // Fallback to direct insert if RPC fails
       const { error: insertError } = await supabase
         .from('notifications')
-        .insert({
+        .insert([{
           user_id: userId,
           title,
           message,
           type,
           read: false
-        } as any);
+        }] as any);
       
       if (insertError) {
         console.error("Error creating notification:", insertError);
@@ -85,7 +85,7 @@ export const getUserNotifications = async (userId: string) => {
       .from('notifications')
       .select('*')
       .or(`user_id.eq.${userId},user_id.is.null`)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }) as any;
     
     if (error) {
       console.error("Error fetching notifications:", error);
