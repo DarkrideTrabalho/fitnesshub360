@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { Plus, Users, Search, X, Check } from "lucide-react";
+import { Plus, Users, Search, X, Check, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,12 +21,15 @@ import {
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 import UserCard from "@/components/UserCard";
-import { Teacher, MOCK_TEACHERS, MOCK_CLASSES, FitnessClass } from "@/lib/types";
+import VacationApprovalCard from "@/components/VacationApprovalCard";
+import { Teacher, MOCK_TEACHERS, MOCK_CLASSES, FitnessClass, Vacation } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import { createNotification } from "@/services/notificationService";
 
 const TeachersPage = () => {
   const [teachers, setTeachers] = useState<Teacher[]>(MOCK_TEACHERS);
   const [classes, setClasses] = useState<FitnessClass[]>(MOCK_CLASSES);
+  const [pendingVacations, setPendingVacations] = useState<Vacation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showVacationOnly, setShowVacationOnly] = useState(false);
   const [isAddTeacherOpen, setIsAddTeacherOpen] = useState(false);
@@ -41,7 +43,6 @@ const TeachersPage = () => {
     specialties: "",
   });
   
-  // Load real data from Supabase if available
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
@@ -55,7 +56,6 @@ const TeachersPage = () => {
         }
         
         if (data && data.length > 0) {
-          // Transform to match the Teacher interface
           const transformedTeachers = data.map(teacher => ({
             id: teacher.id,
             name: teacher.name,
@@ -85,7 +85,6 @@ const TeachersPage = () => {
         }
         
         if (data && data.length > 0) {
-          // Transform to match the FitnessClass interface
           const transformedClasses = data.map(cls => ({
             id: cls.id,
             name: cls.name,
@@ -107,16 +106,45 @@ const TeachersPage = () => {
       }
     };
 
+    const fetchPendingVacations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('vacations')
+          .select('*')
+          .eq('approved', false);
+        
+        if (error) {
+          console.error("Error fetching pending vacations:", error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          const transformedVacations = data.map(vacation => ({
+            id: vacation.id,
+            teacherId: vacation.teacher_id,
+            teacherName: vacation.teacher_name,
+            startDate: new Date(vacation.start_date),
+            endDate: new Date(vacation.end_date),
+            approved: vacation.approved,
+            reason: vacation.reason,
+            createdAt: new Date(vacation.created_at),
+          }));
+          setPendingVacations(transformedVacations);
+        }
+      } catch (error) {
+        console.error("Failed to fetch pending vacations:", error);
+      }
+    };
+
     fetchTeachers();
     fetchClasses();
+    fetchPendingVacations();
   }, []);
   
   const filteredTeachers = teachers.filter(teacher => {
-    // Filter by search term
     const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         teacher.email.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Filter by vacation status
     const matchesVacation = showVacationOnly ? teacher.onVacation : true;
     
     return matchesSearch && matchesVacation;
@@ -128,13 +156,11 @@ const TeachersPage = () => {
   };
   
   const handleAddTeacher = async () => {
-    // Simple validation
     if (!newTeacher.name || !newTeacher.email) {
       toast.error("Please fill in all required fields");
       return;
     }
     
-    // Create a new teacher object
     const fullEmail = newTeacher.email + newTeacher.emailDomain;
     const specialtiesArray = newTeacher.specialties
       .split(",")
@@ -142,10 +168,9 @@ const TeachersPage = () => {
       .filter(Boolean);
       
     try {
-      // First try to create a user in Supabase auth
       const { data: userData, error: userError } = await supabase.auth.admin.createUser({
         email: fullEmail,
-        password: 'temporary123', // Temporary password that should be changed
+        password: 'temporary123',
         email_confirm: true
       });
       
@@ -155,7 +180,6 @@ const TeachersPage = () => {
         return;
       }
       
-      // Then create the teacher profile
       const { data: teacherData, error: teacherError } = await supabase
         .from('teacher_profiles')
         .insert({
@@ -174,7 +198,6 @@ const TeachersPage = () => {
         return;
       }
       
-      // Add the new teacher to the local state
       const teacher: Teacher = {
         id: teacherData[0].id,
         name: newTeacher.name,
@@ -188,7 +211,6 @@ const TeachersPage = () => {
       
       setTeachers([...teachers, teacher]);
       
-      // Reset form and close dialog
       setNewTeacher({ 
         name: "", 
         email: "", 
@@ -206,11 +228,9 @@ const TeachersPage = () => {
   
   const handleDeleteTeacher = async (teacherId: string) => {
     try {
-      // First find the teacher to get their user_id
       const teacher = teachers.find(t => t.id === teacherId);
       if (!teacher) return;
       
-      // Delete from Supabase
       const { error } = await supabase
         .from('teacher_profiles')
         .delete()
@@ -222,7 +242,6 @@ const TeachersPage = () => {
         return;
       }
       
-      // Update local state
       setTeachers(teachers.filter(teacher => teacher.id !== teacherId));
       toast.success("Teacher deleted successfully");
     } catch (error) {
@@ -234,7 +253,6 @@ const TeachersPage = () => {
   const openAssignClasses = (teacher: Teacher) => {
     setSelectedTeacher(teacher);
     
-    // Get current assigned classes for this teacher
     const fetchTeacherClasses = async () => {
       try {
         const { data, error } = await supabase
@@ -263,7 +281,6 @@ const TeachersPage = () => {
     if (!selectedTeacher) return;
     
     try {
-      // First, delete all existing assignments for this teacher
       const { error: deleteError } = await supabase
         .from('teacher_classes')
         .delete()
@@ -275,7 +292,6 @@ const TeachersPage = () => {
         return;
       }
       
-      // Then, insert the new assignments
       if (selectedClasses.length > 0) {
         const assignmentsToInsert = selectedClasses.map(classId => ({
           teacher_id: selectedTeacher.id,
@@ -308,6 +324,94 @@ const TeachersPage = () => {
         : [...prevSelected, classId]
     );
   };
+
+  const handleApproveVacation = async (vacationId: string) => {
+    try {
+      const vacationToApprove = pendingVacations.find(v => v.id === vacationId);
+      if (!vacationToApprove) return;
+
+      const { error } = await supabase
+        .from('vacations')
+        .update({ approved: true })
+        .eq('id', vacationId);
+        
+      if (error) {
+        console.error("Error approving vacation:", error);
+        toast.error("Failed to approve vacation");
+        return;
+      }
+
+      await supabase
+        .from('teacher_profiles')
+        .update({ on_vacation: true })
+        .eq('id', vacationToApprove.teacherId);
+
+      setPendingVacations(pendingVacations.filter(v => v.id !== vacationId));
+      
+      await createNotification(
+        vacationToApprove.teacherId, 
+        "Vacation Request Approved", 
+        `Your vacation request from ${vacationToApprove.startDate.toLocaleDateString()} to ${vacationToApprove.endDate.toLocaleDateString()} has been approved.`, 
+        "vacation-approval"
+      );
+      
+      toast.success("Vacation approved successfully");
+      
+      const { data } = await supabase.from('teacher_profiles').select('*');
+      if (data) {
+        const transformedTeachers = data.map(teacher => ({
+          id: teacher.id,
+          name: teacher.name,
+          email: teacher.email,
+          role: 'teacher' as const,
+          createdAt: new Date(teacher.created_at),
+          specialties: teacher.specialties || [],
+          onVacation: teacher.on_vacation || false,
+          avatarUrl: teacher.avatar_url,
+          vacationDates: vacationToApprove.teacherId === teacher.id ? {
+            start: vacationToApprove.startDate,
+            end: vacationToApprove.endDate
+          } : undefined
+        }));
+        setTeachers(transformedTeachers);
+      }
+    } catch (error) {
+      console.error("Error in vacation approval:", error);
+      toast.error("Failed to process vacation approval");
+    }
+  };
+
+  const handleRejectVacation = async (vacationId: string) => {
+    try {
+      const vacationToReject = pendingVacations.find(v => v.id === vacationId);
+      if (!vacationToReject) return;
+
+      const { error } = await supabase
+        .from('vacations')
+        .delete()
+        .eq('id', vacationId);
+        
+      if (error) {
+        console.error("Error rejecting vacation:", error);
+        toast.error("Failed to reject vacation");
+        return;
+      }
+
+      setPendingVacations(pendingVacations.filter(v => v.id !== vacationId));
+      
+      await createNotification(
+        vacationToReject.teacherId, 
+        "Vacation Request Rejected", 
+        `Your vacation request from ${vacationToReject.startDate.toLocaleDateString()} to ${vacationToReject.endDate.toLocaleDateString()} has been rejected.`, 
+        "vacation-rejection"
+      );
+      
+      toast.success("Vacation request rejected");
+    } catch (error) {
+      console.error("Error in vacation rejection:", error);
+      toast.error("Failed to process vacation rejection");
+    }
+  };
   
   return (
     <DashboardLayout role="admin">
@@ -325,6 +429,25 @@ const TeachersPage = () => {
             Add Teacher
           </Button>
         </div>
+        
+        {pendingVacations.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <h2 className="text-lg font-semibold text-amber-800 flex items-center mb-3">
+              <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+              Pending Vacation Requests ({pendingVacations.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pendingVacations.map(vacation => (
+                <VacationApprovalCard
+                  key={vacation.id}
+                  vacation={vacation}
+                  onApprove={handleApproveVacation}
+                  onReject={handleRejectVacation}
+                />
+              ))}
+            </div>
+          </div>
+        )}
         
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           <div className="relative flex-grow">
@@ -388,7 +511,6 @@ const TeachersPage = () => {
         )}
       </div>
       
-      {/* Add Teacher Dialog */}
       <Dialog open={isAddTeacherOpen} onOpenChange={setIsAddTeacherOpen}>
         <DialogContent>
           <DialogHeader>
@@ -454,7 +576,6 @@ const TeachersPage = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Assign Classes Dialog */}
       <Dialog open={isAssignClassesOpen} onOpenChange={setIsAssignClassesOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

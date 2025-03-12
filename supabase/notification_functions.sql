@@ -35,3 +35,15 @@ BEGIN
     ORDER BY created_at DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Create a function to get pending vacation approvals
+CREATE OR REPLACE FUNCTION get_pending_vacation_approvals()
+RETURNS SETOF vacations AS $$
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM vacations
+    WHERE approved = FALSE
+    ORDER BY created_at DESC;
+END;
+$$ LANGUAGE plpgsql;

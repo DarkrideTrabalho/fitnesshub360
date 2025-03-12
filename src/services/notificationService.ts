@@ -29,7 +29,7 @@ export const createNotification = async (
   try {
     // Try to use RPC first
     const { error: rpcError } = await supabase.rpc('create_notification', {
-      p_user_id: userId || null,
+      p_user_id: userId,
       p_title: title,
       p_message: message,
       p_type: type
@@ -48,7 +48,7 @@ export const createNotification = async (
           message,
           type,
           read: false
-        }] as any);
+        }]);
       
       if (insertError) {
         console.error("Error creating notification:", insertError);
@@ -70,7 +70,7 @@ export const createNotification = async (
 export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
   try {
     // Try to use RPC first
-    const { error: rpcError } = await supabase.rpc('mark_notification_as_read', {
+    const { error: rpcError } = await supabase.rpc('mark_notification_read', {
       p_notification_id: notificationId
     });
     
@@ -81,7 +81,7 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
       const { error: updateError } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('id', notificationId) as any;
+        .eq('id', notificationId);
       
       if (updateError) {
         console.error("Error marking notification as read:", updateError);
@@ -106,7 +106,7 @@ export const getUserNotifications = async (userId: string): Promise<Notification
       .from('notifications')
       .select('*')
       .or(`user_id.eq.${userId},user_id.is.null`)
-      .order('created_at', { ascending: false }) as any;
+      .order('created_at', { ascending: false });
     
     if (error) {
       console.error("Error fetching notifications:", error);
