@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'teacher' | 'student';
 
 export interface User {
@@ -23,6 +22,9 @@ export interface Student extends User {
   membershipType: string;
   lastCheckIn?: Date;
   enrolledClasses: string[];
+  taxNumber?: string;
+  phoneNumber?: string;
+  membershipStatus?: 'active' | 'overdue' | 'suspended';
 }
 
 export interface FitnessClass {
@@ -55,9 +57,28 @@ export interface Vacation {
   startDate: Date;
   endDate: Date;
   approved: boolean;
+  reason?: string;
 }
 
-// Mock data
+export interface Payment {
+  id: string;
+  studentId: string;
+  amount: number;
+  dueDate: Date;
+  paymentDate?: Date;
+  status: 'paid' | 'pending' | 'overdue';
+}
+
+export interface Notification {
+  id: string;
+  userId?: string; // Optional for global notifications
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: Date;
+}
+
 export const MOCK_USERS: User[] = [
   {
     id: '1',

@@ -1,0 +1,4 @@
+
+project_id = "bvkjuqizqetxbgojvtnk"
+app_name = "send-sms"
+entrypoint = "index.ts"

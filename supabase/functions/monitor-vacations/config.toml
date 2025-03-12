@@ -1,0 +1,4 @@
+
+project_id = "bvkjuqizqetxbgojvtnk"
+app_name = "monitor-vacations"
+entrypoint = "index.ts"

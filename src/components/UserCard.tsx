@@ -1,6 +1,6 @@
 
 import React from "react";
-import { MoreHorizontal, Mail, Calendar } from "lucide-react";
+import { MoreHorizontal, Mail, Calendar, CreditCard } from "lucide-react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -11,22 +11,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Teacher } from "@/lib/types";
+import { User, Teacher, Student } from "@/lib/types";
 import { format } from "date-fns";
 
+interface ActionButton {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}
+
 interface UserCardProps {
-  user: User | Teacher;
+  user: User | Teacher | Student;
   onEdit?: (user: User) => void;
   onDelete?: (userId: string) => void;
+  editLabel?: string;
+  buttons?: ActionButton[];
 }
 
 const UserCard: React.FC<UserCardProps> = ({
   user,
   onEdit,
-  onDelete
+  onDelete,
+  editLabel = "Edit",
+  buttons
 }) => {
   const isTeacher = user.role === 'teacher';
+  const isStudent = user.role === 'student';
   const teacher = isTeacher ? user as Teacher : null;
+  const student = isStudent ? user as Student : null;
   
   const getInitials = (name: string) => {
     return name
@@ -69,7 +81,7 @@ const UserCard: React.FC<UserCardProps> = ({
                 <DropdownMenuSeparator />
                 {onEdit && (
                   <DropdownMenuItem onClick={() => onEdit(user)}>
-                    Edit
+                    {editLabel}
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
@@ -106,12 +118,50 @@ const UserCard: React.FC<UserCardProps> = ({
               On vacation until {teacher.vacationDates ? format(teacher.vacationDates.end, 'MMM d, yyyy') : 'N/A'}
             </div>
           )}
+          
+          {isStudent && student?.membershipType && (
+            <div className="mt-2 flex items-center">
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                student.membershipType === 'Premium' 
+                  ? 'bg-purple-100 text-purple-800' 
+                  : student.membershipType === 'Standard'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-slate-100 text-slate-800'
+              }`}>
+                <CreditCard className="mr-1 h-3 w-3" />
+                {student.membershipType}
+              </span>
+            </div>
+          )}
+          
+          {isStudent && student?.taxNumber && (
+            <div className="mt-2 text-xs text-slate-500">
+              Tax Number: {student.taxNumber}
+            </div>
+          )}
         </div>
         
         <div className="mt-3 text-xs text-slate-500 flex items-center">
           <Calendar className="mr-1 h-3 w-3" />
           Joined {format(user.createdAt, 'MMM d, yyyy')}
         </div>
+        
+        {buttons && buttons.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {buttons.map((button, index) => (
+              <Button 
+                key={index} 
+                variant="outline" 
+                size="sm"
+                onClick={button.onClick}
+                className="flex items-center gap-1 text-xs"
+              >
+                {button.icon}
+                {button.label}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

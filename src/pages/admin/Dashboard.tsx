@@ -1,14 +1,99 @@
 
-import React, { useState } from "react";
-import { Users, Calendar, Clock, Activity } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Users, Calendar, Clock, Activity, AlertCircle, CreditCard } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
 import CalendarView from "@/components/CalendarView";
 import UserCard from "@/components/UserCard";
 import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_TEACHERS } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 const AdminDashboard = () => {
-  const teachersOnVacation = MOCK_TEACHERS.filter(teacher => teacher.onVacation);
+  const [teachersOnVacation, setTeachersOnVacation] = useState(MOCK_TEACHERS.filter(teacher => teacher.onVacation));
+  const [overduePaymentsCount, setOverduePaymentsCount] = useState(0);
+  const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // Fetch teachers on vacation
+    const fetchTeachersOnVacation = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('teacher_profiles')
+          .select('*, vacations(*)')
+          .eq('on_vacation', true);
+          
+        if (error) {
+          console.error("Error fetching teachers on vacation:", error);
+          return;
+        }
+        
+        if (data) {
+          const transformedTeachers = data.map(teacher => ({
+            id: teacher.id,
+            name: teacher.name,
+            email: teacher.email,
+            role: 'teacher' as const,
+            createdAt: new Date(teacher.created_at),
+            specialties: teacher.specialties || [],
+            onVacation: true,
+            vacationDates: teacher.vacations && teacher.vacations.length > 0 ? {
+              start: new Date(teacher.vacations[0].start_date),
+              end: new Date(teacher.vacations[0].end_date)
+            } : undefined,
+            avatarUrl: teacher.avatar_url
+          }));
+          setTeachersOnVacation(transformedTeachers);
+        }
+      } catch (error) {
+        console.error("Failed to fetch teachers on vacation:", error);
+      }
+    };
+    
+    // Fetch overdue payments count
+    const fetchOverduePayments = async () => {
+      try {
+        const { data, error, count } = await supabase
+          .from('student_payments')
+          .select('*', { count: 'exact' })
+          .eq('status', 'overdue');
+          
+        if (error) {
+          console.error("Error fetching overdue payments:", error);
+          return;
+        }
+        
+        setOverduePaymentsCount(count || 0);
+      } catch (error) {
+        console.error("Failed to fetch overdue payments:", error);
+      }
+    };
+    
+    // Fetch recent notifications
+    const fetchNotifications = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (error) {
+          console.error("Error fetching notifications:", error);
+          return;
+        }
+        
+        if (data) {
+          setRecentNotifications(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+    
+    fetchTeachersOnVacation();
+    fetchOverduePayments();
+    fetchNotifications();
+  }, []);
   
   return (
     <DashboardLayout role="admin">
@@ -38,10 +123,11 @@ const AdminDashboard = () => {
             trend={{ value: 5, label: "vs last month", positive: true }}
           />
           <StatCard
-            title="Avg. Attendance"
-            value="76%"
-            icon={<Activity className="h-5 w-5 text-primary" />}
-            trend={{ value: 3, label: "vs last month", positive: false }}
+            title="Overdue Payments"
+            value={overduePaymentsCount}
+            icon={<AlertCircle className="h-5 w-5 text-red-500" />}
+            trend={{ value: overduePaymentsCount > 0 ? 100 : 0, label: "action needed", positive: false }}
+            className={overduePaymentsCount > 0 ? "border-red-100 bg-red-50" : ""}
           />
         </div>
         
@@ -50,7 +136,8 @@ const AdminDashboard = () => {
             <CalendarView classes={MOCK_CLASSES} />
           </div>
           
-          <div>
+          <div className="space-y-6">
+            {/* Teachers on Vacation */}
             <div className="bg-white border border-slate-100 rounded-lg shadow-sm overflow-hidden">
               <div className="p-4 border-b border-slate-100">
                 <h3 className="font-medium text-slate-900 flex items-center">
@@ -97,6 +184,63 @@ const AdminDashboard = () => {
                 )}
               </div>
             </div>
+            
+            {/* Overdue Payments */}
+            {overduePaymentsCount > 0 && (
+              <div className="bg-white border border-red-100 rounded-lg shadow-sm overflow-hidden">
+                <div className="p-4 bg-red-50 border-b border-red-100">
+                  <h3 className="font-medium text-red-800 flex items-center">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Overdue Payments
+                  </h3>
+                </div>
+                
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        {overduePaymentsCount} {overduePaymentsCount === 1 ? 'student' : 'students'} with overdue payments
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Requires immediate attention
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.location.href = '/admin/students'}
+                      className="text-xs"
+                    >
+                      View All
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Recent Notifications */}
+            {recentNotifications.length > 0 && (
+              <div className="bg-white border border-slate-100 rounded-lg shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-slate-100">
+                  <h3 className="font-medium text-slate-900 flex items-center">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Recent Notifications
+                  </h3>
+                </div>
+                
+                <div className="divide-y divide-slate-100">
+                  {recentNotifications.map(notification => (
+                    <div key={notification.id} className="p-4">
+                      <h4 className="text-sm font-medium text-slate-900">{notification.title}</h4>
+                      <p className="text-xs text-slate-500 mt-1">{notification.message}</p>
+                      <p className="text-xs text-slate-400 mt-2">
+                        {new Date(notification.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
