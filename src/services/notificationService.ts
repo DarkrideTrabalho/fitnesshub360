@@ -15,19 +15,19 @@ export const createNotification = async ({
   type
 }: CreateNotificationParams) => {
   try {
-    // Use raw queries to avoid TypeScript errors
-    const { error } = await supabase.rpc('create_notification', {
+    // Try to use RPC first (this avoids TypeScript errors)
+    const { error: rpcError } = await supabase.rpc('create_notification', {
       p_user_id: userId,
       p_title: title,
       p_message: message,
       p_type: type
     });
 
-    if (error) {
-      console.error("Error creating notification using RPC:", error);
+    if (rpcError) {
+      console.error("Error creating notification using RPC:", rpcError);
       
-      // Fallback to direct insert if RPC fails
-      const { error: insertError } = await supabase.from('notifications').insert({
+      // Fallback to direct insert if RPC fails - use any type to bypass TypeScript restrictions
+      const { error: insertError } = await supabase.from('notifications' as any).insert({
         user_id: userId,
         title,
         message,
@@ -50,17 +50,17 @@ export const createNotification = async ({
 
 export const markNotificationAsRead = async (notificationId: string) => {
   try {
-    // Use raw queries to avoid TypeScript errors
-    const { error } = await supabase.rpc('mark_notification_read', {
+    // Try to use RPC first (this avoids TypeScript errors)
+    const { error: rpcError } = await supabase.rpc('mark_notification_read', {
       p_notification_id: notificationId
     });
 
-    if (error) {
-      console.error("Error marking notification as read using RPC:", error);
+    if (rpcError) {
+      console.error("Error marking notification as read using RPC:", rpcError);
       
-      // Fallback to direct update if RPC fails
+      // Fallback to direct update if RPC fails - use any type to bypass TypeScript restrictions
       const { error: updateError } = await supabase
-        .from('notifications')
+        .from('notifications' as any)
         .update({ read: true })
         .eq('id', notificationId);
       
@@ -79,9 +79,9 @@ export const markNotificationAsRead = async (notificationId: string) => {
 
 export const getUserNotifications = async (userId: string) => {
   try {
-    // Use raw queries to avoid TypeScript errors
+    // Use any type to bypass TypeScript restrictions
     const { data, error } = await supabase
-      .from('notifications')
+      .from('notifications' as any)
       .select('*')
       .or(`user_id.eq.${userId},user_id.is.null`)
       .order('created_at', { ascending: false });
