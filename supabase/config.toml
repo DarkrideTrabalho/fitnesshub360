@@ -1,4 +1,2 @@
 
 project_id = "bvkjuqizqetxbgojvtnk"
-schema_migrations_table = "schema_migrations"
-database_url_override = ""  # Deixe em branco a menos que precise sobrescrever a URL padrão

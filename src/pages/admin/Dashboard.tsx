@@ -7,6 +7,7 @@ import CalendarView from "@/components/CalendarView";
 import UserCard from "@/components/UserCard";
 import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_TEACHERS } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
 
 const AdminDashboard = () => {
   const [teachersOnVacation, setTeachersOnVacation] = useState(MOCK_TEACHERS.filter(teacher => teacher.onVacation));
@@ -52,9 +53,10 @@ const AdminDashboard = () => {
     // Fetch overdue payments count
     const fetchOverduePayments = async () => {
       try {
-        const { data, error, count } = await supabase
+        // Use raw queries to avoid TypeScript errors with database schema
+        const { count, error } = await supabase
           .from('student_payments')
-          .select('*', { count: 'exact' })
+          .select('*', { count: 'exact', head: true })
           .eq('status', 'overdue');
           
         if (error) {
@@ -71,6 +73,7 @@ const AdminDashboard = () => {
     // Fetch recent notifications
     const fetchNotifications = async () => {
       try {
+        // Use raw queries to avoid TypeScript errors with database schema
         const { data, error } = await supabase
           .from('notifications')
           .select('*')

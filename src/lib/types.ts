@@ -24,6 +24,7 @@ export interface Student extends User {
   enrolledClasses: string[];
   taxNumber?: string;
   phoneNumber?: string;
+  billingAddress?: string;
   membershipStatus?: 'active' | 'overdue' | 'suspended';
 }
 
