@@ -1,16 +1,20 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { FiUsers, FiClock } from "react-icons/fi";
+import { FiUsers, FiClock, FiEdit2 } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { FitnessClass } from "@/lib/types";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface ClassCardProps {
   fitnessClass: FitnessClass;
   isEnrolled?: boolean;
   onEnroll?: (classId: string) => void;
   viewOnly?: boolean;
+  onUpdateDescription?: (classId: string, newDescription: string) => Promise<void>;
+  editable?: boolean;
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({
@@ -18,6 +22,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
   isEnrolled = false,
   onEnroll,
   viewOnly = false,
+  onUpdateDescription,
+  editable = false,
 }) => {
   const {
     id,
@@ -33,10 +39,26 @@ const ClassCard: React.FC<ClassCardProps> = ({
     imageUrl,
   } = fitnessClass;
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [newDescription, setNewDescription] = useState(description);
+
   const availableSpots = maxCapacity - enrolledCount;
   const isFull = availableSpots <= 0;
 
   const formattedDate = format(date, "EEEE, MMM d");
+
+  const handleSaveDescription = async () => {
+    if (onUpdateDescription) {
+      try {
+        await onUpdateDescription(id, newDescription);
+        setIsEditing(false);
+        toast.success("Description updated successfully");
+      } catch (error) {
+        toast.error("Failed to update description");
+        console.error("Error updating description:", error);
+      }
+    }
+  };
 
   return (
     <motion.div
@@ -59,9 +81,51 @@ const ClassCard: React.FC<ClassCardProps> = ({
 
       <div className="p-4 flex-1 flex flex-col">
         <h3 className="text-lg font-semibold text-slate-900 mb-1">{name}</h3>
-        <p className="text-sm text-slate-600 mb-4 line-clamp-2 flex-grow">
-          {description}
-        </p>
+        
+        {isEditing ? (
+          <div className="mb-4">
+            <Textarea 
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              className="text-sm resize-none mb-2"
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleSaveDescription}
+              >
+                Save
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setNewDescription(description);
+                  setIsEditing(false);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="relative mb-4">
+            <p className="text-sm text-slate-600 line-clamp-2 flex-grow">
+              {description}
+            </p>
+            {editable && onUpdateDescription && (
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="absolute top-0 right-0 p-1 text-slate-400 hover:text-slate-600"
+                aria-label="Edit description"
+              >
+                <FiEdit2 size={14} />
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="space-y-3 mb-4">
           <div className="flex items-center justify-between">

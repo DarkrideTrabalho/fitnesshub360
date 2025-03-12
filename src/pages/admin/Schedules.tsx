@@ -1,13 +1,13 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Plus, 
   Calendar,
   Search, 
-  ChevronLeft, 
-  ChevronRight,
   X,
-  CalendarIcon
+  CalendarIcon,
+  ImageIcon,
+  Edit2
 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -37,12 +37,27 @@ import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 import ClassCard from "@/components/ClassCard";
 import { FitnessClass, MOCK_CLASSES, MOCK_TEACHERS } from "@/lib/types";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { supabase } from "@/integrations/supabase/client";
+
+// Sample class cover images
+const CLASS_COVER_IMAGES = [
+  "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1534258936925-c58bed479fcb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80", 
+  "https://images.unsplash.com/photo-1518611012118-696072aa579a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+];
 
 const SchedulesPage = () => {
   const [classes, setClasses] = useState<FitnessClass[]>(MOCK_CLASSES);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isAddClassOpen, setIsAddClassOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<FitnessClass | null>(null);
   const [newClass, setNewClass] = useState({
     name: "",
     description: "",
@@ -52,6 +67,7 @@ const SchedulesPage = () => {
     startTime: "",
     endTime: "",
     maxCapacity: 10,
+    imageUrl: CLASS_COVER_IMAGES[0]
   });
   
   const uniqueCategories = Array.from(
@@ -97,7 +113,7 @@ const SchedulesPage = () => {
       endTime: newClass.endTime,
       maxCapacity: newClass.maxCapacity,
       enrolledCount: 0,
-      imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+      imageUrl: newClass.imageUrl
     };
     
     // Add the new class to the list
@@ -113,6 +129,7 @@ const SchedulesPage = () => {
       startTime: "",
       endTime: "",
       maxCapacity: 10,
+      imageUrl: CLASS_COVER_IMAGES[0]
     });
     setIsAddClassOpen(false);
     
@@ -122,6 +139,21 @@ const SchedulesPage = () => {
   const handleDeleteClass = (classId: string) => {
     setClasses(classes.filter(cls => cls.id !== classId));
     toast.success("Class deleted successfully");
+  };
+
+  const handleUpdateDescription = async (classId: string, newDescription: string) => {
+    // In a real app, this would make a database call
+    const updatedClasses = classes.map(cls => 
+      cls.id === classId 
+        ? { ...cls, description: newDescription } 
+        : cls
+    );
+    
+    setClasses(updatedClasses);
+    // If using Supabase, you would do something like:
+    // await supabase.from('classes').update({ description: newDescription }).eq('id', classId);
+    
+    return Promise.resolve();
   };
   
   return (
@@ -202,6 +234,8 @@ const SchedulesPage = () => {
                 key={cls.id}
                 fitnessClass={cls}
                 viewOnly={true}
+                editable={true}
+                onUpdateDescription={handleUpdateDescription}
               />
             ))}
           </div>
@@ -210,7 +244,7 @@ const SchedulesPage = () => {
       
       {/* Add Class Dialog */}
       <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Add New Class</DialogTitle>
           </DialogHeader>
@@ -340,6 +374,41 @@ const SchedulesPage = () => {
                 onChange={(e) => setNewClass({...newClass, maxCapacity: parseInt(e.target.value)})}
                 required
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-3">
+                Choose Class Image
+              </label>
+              <RadioGroup 
+                value={newClass.imageUrl} 
+                onValueChange={(value) => setNewClass({...newClass, imageUrl: value})}
+                className="grid grid-cols-3 gap-3"
+              >
+                {CLASS_COVER_IMAGES.map((url, index) => (
+                  <div key={index} className="relative">
+                    <RadioGroupItem
+                      id={`image-${index}`}
+                      value={url}
+                      className="sr-only"
+                    />
+                    <Label
+                      htmlFor={`image-${index}`}
+                      className="cursor-pointer"
+                    >
+                      <div 
+                        className={`aspect-video rounded-md overflow-hidden border-2 ${newClass.imageUrl === url ? 'border-primary' : 'border-transparent'}`}
+                      >
+                        <img
+                          src={url}
+                          alt={`Class cover ${index + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
           </div>
           
