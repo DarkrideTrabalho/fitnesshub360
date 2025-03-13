@@ -348,12 +348,12 @@ const TeachersPage = () => {
 
       setPendingVacations(pendingVacations.filter(v => v.id !== vacationId));
       
-      await createNotification(
-        vacationToApprove.teacherId, 
-        "Vacation Request Approved", 
-        `Your vacation request from ${vacationToApprove.startDate.toLocaleDateString()} to ${vacationToApprove.endDate.toLocaleDateString()} has been approved.`, 
-        "vacation-approval"
-      );
+      await createNotification({
+        userId: vacationToApprove.teacherId,
+        title: "Vacation Request Approved",
+        message: `Your vacation request from ${vacationToApprove.startDate.toLocaleDateString()} to ${vacationToApprove.endDate.toLocaleDateString()} has been approved.`,
+        type: "vacation-approval"
+      });
       
       toast.success("Vacation approved successfully");
       
@@ -399,12 +399,12 @@ const TeachersPage = () => {
 
       setPendingVacations(pendingVacations.filter(v => v.id !== vacationId));
       
-      await createNotification(
-        vacationToReject.teacherId, 
-        "Vacation Request Rejected", 
-        `Your vacation request from ${vacationToReject.startDate.toLocaleDateString()} to ${vacationToReject.endDate.toLocaleDateString()} has been rejected.`, 
-        "vacation-rejection"
-      );
+      await createNotification({
+        userId: vacationToReject.teacherId,
+        title: "Vacation Request Rejected",
+        message: `Your vacation request from ${vacationToReject.startDate.toLocaleDateString()} to ${vacationToReject.endDate.toLocaleDateString()} has been rejected.`,
+        type: "vacation-rejection"
+      });
       
       toast.success("Vacation request rejected");
     } catch (error) {
