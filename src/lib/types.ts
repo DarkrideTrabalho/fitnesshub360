@@ -72,12 +72,12 @@ export interface Payment {
 
 export interface Notification {
   id: string;
-  userId?: string; // Optional for global notifications
+  user_id: string | null;
   title: string;
   message: string;
   type: string;
-  read: boolean;
-  createdAt: Date;
+  read: boolean | null;
+  created_at: string | null;
 }
 
 export const MOCK_USERS: User[] = [

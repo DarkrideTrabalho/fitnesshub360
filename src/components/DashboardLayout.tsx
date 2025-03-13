@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -11,7 +12,8 @@ import {
   Settings,
   Bell,
   UserCircle2,
-  LogOut
+  LogOut,
+  LucideIcon 
 } from 'lucide-react'; 
 import UserMenu from './UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,9 +26,13 @@ interface DashboardLayoutProps {
   role: 'admin' | 'teacher' | 'student';
 }
 
-const DASHBOARD_NAV_ITEMS: Record<string, { name: string; href: string; icon: React.ForwardRefExoticComponent<Omit<React.SVGProps<SVGSVGElement>, "ref"> & {
-    ref?: React.Ref<SVGSVGElement> | undefined;
-}>; }[]> = {
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+const DASHBOARD_NAV_ITEMS: Record<string, NavItem[]> = {
   admin: [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Teachers', href: '/admin/teachers', icon: Users },
