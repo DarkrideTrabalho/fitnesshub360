@@ -325,15 +325,15 @@ const TeachersPage = () => {
     );
   };
 
-  const handleApproveVacation = async (vacationId: string) => {
+  const handleApproveVacation = async (id: string) => {
     try {
-      const vacationToApprove = pendingVacations.find(v => v.id === vacationId);
+      const vacationToApprove = pendingVacations.find(v => v.id === id);
       if (!vacationToApprove) return;
 
       const { error } = await supabase
         .from('vacations')
         .update({ approved: true })
-        .eq('id', vacationId);
+        .eq('id', id);
         
       if (error) {
         console.error("Error approving vacation:", error);
@@ -346,13 +346,17 @@ const TeachersPage = () => {
         .update({ on_vacation: true })
         .eq('id', vacationToApprove.teacherId);
 
-      setPendingVacations(pendingVacations.filter(v => v.id !== vacationId));
+      setPendingVacations(pendingVacations.filter(v => v.id !== id));
+      
+      const formattedStartDate = vacationToApprove.startDate.toLocaleDateString();
+      const formattedEndDate = vacationToApprove.endDate.toLocaleDateString();
       
       await createNotification({
+        title: 'Vacation Approved',
+        message: `Your vacation request from ${formattedStartDate} to ${formattedEndDate} has been approved.`,
+        type: 'success',
         user_id: vacationToApprove.teacherId,
-        title: "Vacation Request Approved",
-        message: `Your vacation request from ${vacationToApprove.startDate.toLocaleDateString()} to ${vacationToApprove.endDate.toLocaleDateString()} has been approved.`,
-        type: "vacation-approval"
+        read: false,
       });
       
       toast.success("Vacation approved successfully");
@@ -381,15 +385,15 @@ const TeachersPage = () => {
     }
   };
 
-  const handleRejectVacation = async (vacationId: string) => {
+  const handleRejectVacation = async (id: string) => {
     try {
-      const vacationToReject = pendingVacations.find(v => v.id === vacationId);
+      const vacationToReject = pendingVacations.find(v => v.id === id);
       if (!vacationToReject) return;
 
       const { error } = await supabase
         .from('vacations')
         .delete()
-        .eq('id', vacationId);
+        .eq('id', id);
         
       if (error) {
         console.error("Error rejecting vacation:", error);
@@ -397,13 +401,17 @@ const TeachersPage = () => {
         return;
       }
 
-      setPendingVacations(pendingVacations.filter(v => v.id !== vacationId));
+      setPendingVacations(pendingVacations.filter(v => v.id !== id));
+      
+      const formattedStartDate = vacationToReject.startDate.toLocaleDateString();
+      const formattedEndDate = vacationToReject.endDate.toLocaleDateString();
       
       await createNotification({
+        title: 'Vacation Request Rejected',
+        message: `Your vacation request from ${formattedStartDate} to ${formattedEndDate} has been rejected.`,
+        type: 'error',
         user_id: vacationToReject.teacherId,
-        title: "Vacation Request Rejected",
-        message: `Your vacation request from ${vacationToReject.startDate.toLocaleDateString()} to ${vacationToReject.endDate.toLocaleDateString()} has been rejected.`,
-        type: "vacation-rejection"
+        read: false,
       });
       
       toast.success("Vacation request rejected");

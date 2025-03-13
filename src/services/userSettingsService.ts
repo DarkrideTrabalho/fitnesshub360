@@ -1,6 +1,11 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserSettings } from '@/lib/types';
+import { UserSettings } from '@/lib/types/settings';
+
+interface SupabaseUserSettings {
+  theme: string;
+  language: string;
+}
 
 /**
  * Save user settings to the database
@@ -9,11 +14,7 @@ export const saveUserSettings = async ({
   userId,
   theme,
   language,
-}: {
-  userId: string;
-  theme: 'light' | 'dark' | 'system';
-  language: string;
-}): Promise<boolean> => {
+}: UserSettings): Promise<boolean> => {
   try {
     const { error } = await supabase.rpc('save_user_settings', {
       p_user_id: userId,
@@ -36,7 +37,7 @@ export const getUserSettings = async (
   userId: string
 ): Promise<UserSettings> => {
   try {
-    const { data, error } = await supabase.rpc('get_user_settings', {
+    const { data, error } = await supabase.rpc<SupabaseUserSettings>('get_user_settings', {
       p_user_id: userId,
     });
 
