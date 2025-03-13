@@ -349,7 +349,7 @@ const TeachersPage = () => {
       setPendingVacations(pendingVacations.filter(v => v.id !== vacationId));
       
       await createNotification({
-        userId: vacationToApprove.teacherId,
+        user_id: vacationToApprove.teacherId,
         title: "Vacation Request Approved",
         message: `Your vacation request from ${vacationToApprove.startDate.toLocaleDateString()} to ${vacationToApprove.endDate.toLocaleDateString()} has been approved.`,
         type: "vacation-approval"
@@ -400,7 +400,7 @@ const TeachersPage = () => {
       setPendingVacations(pendingVacations.filter(v => v.id !== vacationId));
       
       await createNotification({
-        userId: vacationToReject.teacherId,
+        user_id: vacationToReject.teacherId,
         title: "Vacation Request Rejected",
         message: `Your vacation request from ${vacationToReject.startDate.toLocaleDateString()} to ${vacationToReject.endDate.toLocaleDateString()} has been rejected.`,
         type: "vacation-rejection"

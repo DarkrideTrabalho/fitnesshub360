@@ -1,22 +1,8 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { format } from 'date-fns';
-import { Clock, Check, X } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-
-export interface Vacation {
-  id: string;
-  teacher_id: string | null;
-  teacher_name: string | null;
-  start_date: string;
-  end_date: string;
-  approved: boolean | null;
-  reason: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
+import { Check, X, Calendar } from 'lucide-react';
+import { Vacation } from '@/lib/types';
 
 interface VacationApprovalCardProps {
   vacation: Vacation;
@@ -24,62 +10,56 @@ interface VacationApprovalCardProps {
   onReject: (id: string) => void;
 }
 
-const VacationApprovalCard: React.FC<VacationApprovalCardProps> = ({
+const VacationApprovalCard = ({
   vacation,
   onApprove,
   onReject
-}) => {
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'PP');
-  };
-
-  const timeAgo = vacation.created_at 
-    ? formatDistanceToNow(new Date(vacation.created_at), { addSuffix: true })
-    : 'recently';
-
+}: VacationApprovalCardProps) => {
+  // Use the appropriate property names from the Vacation interface
+  const startDate = vacation.startDate || vacation.start_date;
+  const endDate = vacation.endDate || vacation.end_date;
+  
+  // Format dates for display
+  const formattedStartDate = startDate ? new Date(startDate).toLocaleDateString() : '';
+  const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString() : '';
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-lg">{vacation.teacher_name || 'Teacher'}</CardTitle>
-        <CardDescription className="flex items-center gap-1">
-          <Clock className="h-3 w-3" /> Requested {timeAgo}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div>
-            <span className="font-medium">Start Date:</span> {formatDate(vacation.start_date)}
-          </div>
-          <div>
-            <span className="font-medium">End Date:</span> {formatDate(vacation.end_date)}
+    <div className="bg-white border border-amber-100 rounded-lg p-4 shadow-sm">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-medium text-slate-900">{vacation.teacherName || vacation.teacher_name}</h3>
+          <div className="flex items-center text-sm text-slate-500 mt-1">
+            <Calendar className="h-4 w-4 mr-1 text-amber-500" />
+            <span>
+              {formattedStartDate} - {formattedEndDate}
+            </span>
           </div>
           {vacation.reason && (
-            <div>
-              <span className="font-medium">Reason:</span> {vacation.reason}
-            </div>
+            <p className="mt-2 text-sm text-slate-600 bg-amber-50 p-2 rounded">
+              {vacation.reason}
+            </p>
           )}
         </div>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-          onClick={() => onReject(vacation.id)}
-        >
-          <X className="mr-2 h-4 w-4" />
-          Reject
-        </Button>
-        <Button
-          size="sm"
-          className="bg-green-600 hover:bg-green-700"
-          onClick={() => onApprove(vacation.id)}
-        >
-          <Check className="mr-2 h-4 w-4" />
-          Approve
-        </Button>
-      </CardFooter>
-    </Card>
+        <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-red-200 hover:bg-red-50 text-red-600"
+            onClick={() => onReject(vacation.id)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-green-200 hover:bg-green-50 text-green-600"
+            onClick={() => onApprove(vacation.id)}
+          >
+            <Check className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 

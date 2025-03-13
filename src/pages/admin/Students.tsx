@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Plus, Users, Search, X, Send, Phone, CreditCard, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,6 @@ const StudentsPage = () => {
         }
         
         if (data && data.length > 0) {
-          // Transform to match the Student interface
           const transformedStudents = data.map(student => ({
             id: student.id,
             name: student.name || '',
@@ -62,7 +60,6 @@ const StudentsPage = () => {
     fetchStudents();
   }, []);
 
-  // Filter students based on search term and search type
   const filteredStudents = students.filter(student => {
     if (searchBy === "name") {
       return student.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -81,16 +78,8 @@ const StudentsPage = () => {
     setLoading(true);
     
     try {
-      // This would typically connect to an SMS service API
-      // For now, we'll just simulate it with a timeout
-      
-      // Generate a unique registration link
       const registrationId = Math.random().toString(36).substring(2, 15);
       const registrationLink = `https://fitnesshub.com/register/${registrationId}`;
-      
-      // In a real implementation, you would:
-      // 1. Save the registration ID to the database
-      // 2. Send an SMS through a service like Twilio or MessageBird
       
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -105,7 +94,6 @@ const StudentsPage = () => {
     }
   };
 
-  // Check for overdue payments
   const checkPaymentStatus = async (studentId: string) => {
     try {
       const { data, error } = await supabase
@@ -126,7 +114,6 @@ const StudentsPage = () => {
           action: {
             label: "View",
             onClick: () => {
-              // In a real app, this would navigate to the student's payment history
               console.log("View payment details for student:", studentId);
             }
           }
@@ -236,7 +223,6 @@ const StudentsPage = () => {
         )}
       </div>
       
-      {/* SMS Registration Dialog */}
       <Dialog open={isSMSDialogOpen} onOpenChange={setIsSMSDialogOpen}>
         <DialogContent>
           <DialogHeader>

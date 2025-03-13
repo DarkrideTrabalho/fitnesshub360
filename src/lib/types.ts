@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -32,6 +31,7 @@ export interface Student extends User {
   role: 'student';
   enrolledClasses?: string[];
   membershipType?: string;
+  membershipStatus?: 'active' | 'overdue' | 'expired';
   taxNumber?: string;
   lastCheckIn?: Date;
 }
@@ -80,6 +80,11 @@ export interface Vacation {
   reason?: string;
   approved: boolean;
   createdAt: Date;
+  teacher_id?: string;
+  teacher_name?: string;
+  start_date?: Date;
+  end_date?: Date;
+  created_at?: string;
 }
 
 // Notification Types
