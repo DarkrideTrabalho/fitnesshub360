@@ -1,3 +1,5 @@
+
+// User types
 export interface User {
   id: string;
   name: string;
@@ -5,15 +7,6 @@ export interface User {
   role: 'admin' | 'teacher' | 'student';
   createdAt: Date;
   avatarUrl?: string;
-}
-
-export interface Class {
-  id: string;
-  name: string;
-  description: string;
-  teacherId: string;
-  schedule: string;
-  createdAt: Date;
 }
 
 // Extended user types
@@ -45,60 +38,7 @@ export type UserProfile = Teacher | Student | AdminProfile;
 // Type for User Role
 export type UserRole = 'admin' | 'teacher' | 'student';
 
-// Fitness Class
-export interface FitnessClass {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  teacherId: string;
-  teacherName: string;
-  date: Date;
-  startTime: string;
-  endTime: string;
-  maxCapacity: number;
-  enrolledCount: number;
-  imageUrl?: string;
-}
-
-// Enrollment
-export interface ClassEnrollment {
-  id: string;
-  classId: string;
-  studentId: string;
-  enrolledAt: Date;
-  attended: boolean;
-}
-
-// Vacation
-export interface Vacation {
-  id: string;
-  teacherId: string;
-  teacherName: string;
-  startDate: Date;
-  endDate: Date;
-  reason?: string;
-  approved: boolean;
-  createdAt: Date;
-  teacher_id?: string;
-  teacher_name?: string;
-  start_date?: Date;
-  end_date?: Date;
-  created_at?: string;
-}
-
-// Notification Types
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  user_id: string;
-  read: boolean;
-  created_at: string;
-}
-
-// Mock data
+// Mock users data
 export const MOCK_TEACHERS: Teacher[] = [
   {
     id: '1',
@@ -177,83 +117,3 @@ export const MOCK_USERS: User[] = [
     createdAt: new Date()
   }
 ];
-
-export const MOCK_CLASSES: FitnessClass[] = [
-  {
-    id: '7',
-    name: 'Yoga for Beginners',
-    description: 'A gentle introduction to yoga',
-    category: 'Yoga',
-    teacherId: '1',
-    teacherName: 'John Smith',
-    date: new Date(),
-    startTime: '09:00',
-    endTime: '10:00',
-    maxCapacity: 15,
-    enrolledCount: 5,
-    imageUrl: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0'
-  },
-  {
-    id: '8',
-    name: 'Advanced Pilates',
-    description: 'Challenging pilates class',
-    category: 'Pilates',
-    teacherId: '2',
-    teacherName: 'Emily Johnson',
-    date: new Date(),
-    startTime: '17:00',
-    endTime: '18:00',
-    maxCapacity: 12,
-    enrolledCount: 8,
-    imageUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a'
-  },
-  {
-    id: '9',
-    name: 'Crossfit Level 2',
-    description: 'Intense crossfit training',
-    category: 'CrossFit',
-    teacherId: '3',
-    teacherName: 'Michael Brown',
-    date: new Date(),
-    startTime: '18:00',
-    endTime: '19:00',
-    maxCapacity: 10,
-    enrolledCount: 10,
-    imageUrl: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5'
-  },
-];
-
-export const MOCK_VACATIONS: Vacation[] = [
-  {
-    id: 'v1',
-    teacherId: '1',
-    teacherName: 'John Smith',
-    startDate: new Date('2024-07-01'),
-    endDate: new Date('2024-07-15'),
-    reason: 'Family vacation',
-    approved: true,
-    createdAt: new Date()
-  }
-];
-
-// Language types
-export type Language = {
-  code: string;
-  name: string;
-  flag: string;
-};
-
-export const AVAILABLE_LANGUAGES: Language[] = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-];
-
-export interface UserSettings {
-  theme: 'light' | 'dark' | 'system';
-  language: string;
-  userId: string;
-}

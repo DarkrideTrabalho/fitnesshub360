@@ -1,13 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { Notification } from '@/lib/types';
-
-export interface CreateNotificationProps {
-  title: string;
-  message: string;
-  type: string;
-  user_id: string;
-}
+import { Notification, CreateNotificationProps } from '@/lib/types';
 
 /**
  * Creates a new notification in the database

@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserSettings } from '@/lib/types/settings';
+import { UserSettings } from '@/lib/types';
 
 interface SupabaseUserSettings {
   theme: string;

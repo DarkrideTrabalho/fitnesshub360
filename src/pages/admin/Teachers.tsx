@@ -42,7 +42,9 @@ const TeachersPage = () => {
     emailDomain: "@fitnesshub.com",
     specialties: "",
   });
-  
+  const [affectedClasses, setAffectedClasses] = useState<FitnessClass[]>([]);
+  const [showAffectedClassesDialog, setShowAffectedClassesDialog] = useState(false);
+
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
@@ -355,33 +357,29 @@ const TeachersPage = () => {
         title: 'Vacation Approved',
         message: `Your vacation request from ${formattedStartDate} to ${formattedEndDate} has been approved.`,
         type: 'success',
-        user_id: vacationToApprove.teacherId,
-        read: false,
+        user_id: vacationToApprove.teacherId
       });
       
       toast.success("Vacation approved successfully");
       
-      const { data } = await supabase.from('teacher_profiles').select('*');
-      if (data) {
-        const transformedTeachers = data.map(teacher => ({
-          id: teacher.id,
-          name: teacher.name,
-          email: teacher.email,
-          role: 'teacher' as const,
-          createdAt: new Date(teacher.created_at),
-          specialties: teacher.specialties || [],
-          onVacation: teacher.on_vacation || false,
-          avatarUrl: teacher.avatar_url,
-          vacationDates: vacationToApprove.teacherId === teacher.id ? {
-            start: vacationToApprove.startDate,
-            end: vacationToApprove.endDate
-          } : undefined
-        }));
-        setTeachers(transformedTeachers);
+      if (vacationToApprove.startDate && vacationToApprove.endDate) {
+        const { data: affectedClasses } = await supabase
+          .from('classes')
+          .select('*')
+          .eq('teacher_id', vacationToApprove.teacherId)
+          .gte('date', vacationToApprove.startDate.toISOString())
+          .lte('date', vacationToApprove.endDate.toISOString());
+          
+        if (affectedClasses && affectedClasses.length > 0) {
+          toast.warning(`${affectedClasses.length} classes need to be reassigned during this vacation period.`);
+          
+          setAffectedClasses(affectedClasses);
+          setShowAffectedClassesDialog(true);
+        }
       }
     } catch (error) {
-      console.error("Error in vacation approval:", error);
-      toast.error("Failed to process vacation approval");
+      console.error("Error in approve vacation flow:", error);
+      toast.error("An error occurred while approving vacation");
     }
   };
 
@@ -397,7 +395,7 @@ const TeachersPage = () => {
         
       if (error) {
         console.error("Error rejecting vacation:", error);
-        toast.error("Failed to reject vacation");
+        toast.error("Failed to reject vacation request");
         return;
       }
 
@@ -410,14 +408,13 @@ const TeachersPage = () => {
         title: 'Vacation Request Rejected',
         message: `Your vacation request from ${formattedStartDate} to ${formattedEndDate} has been rejected.`,
         type: 'error',
-        user_id: vacationToReject.teacherId,
-        read: false,
+        user_id: vacationToReject.teacherId
       });
       
       toast.success("Vacation request rejected");
     } catch (error) {
-      console.error("Error in vacation rejection:", error);
-      toast.error("Failed to process vacation rejection");
+      console.error("Error in reject vacation flow:", error);
+      toast.error("An error occurred while rejecting vacation");
     }
   };
   
@@ -624,6 +621,31 @@ const TeachersPage = () => {
             <Button onClick={handleAssignClasses}>
               Save Assignments
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={showAffectedClassesDialog} onOpenChange={setShowAffectedClassesDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Affected Classes</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {affectedClasses.map(cls => (
+              <div key={cls.id} className="flex items-center space-x-2 p-2 border rounded hover:bg-slate-50">
+                <span className="font-medium block">{cls.name}</span>
+                <span className="text-xs text-slate-500 block">
+                  {cls.category} • {cls.date.toLocaleDateString()} • {cls.startTime}-{cls.endTime}
+                </span>
+              </div>
+            ))}
+          </div>
+          
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
