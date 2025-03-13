@@ -94,15 +94,11 @@ export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ childr
       
       // If user is authenticated, save to database
       if (user) {
-        const success = await saveUserSettings({
+        await saveUserSettings({
           ...settings,
           theme,
           userId: user.id
         });
-        
-        if (!success) {
-          throw new Error('Failed to save theme preference');
-        }
       }
       
       toast.success('Theme updated successfully');
@@ -128,15 +124,11 @@ export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ childr
       
       // If user is authenticated, save to database
       if (user) {
-        const success = await saveUserSettings({
+        await saveUserSettings({
           ...settings,
           language,
           userId: user.id
         });
-        
-        if (!success) {
-          throw new Error('Failed to save language preference');
-        }
       }
       
       toast.success('Language updated successfully');

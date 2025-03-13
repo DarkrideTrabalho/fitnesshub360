@@ -13,18 +13,19 @@ export const saveUserSettings = async ({
   userId: string;
   theme: 'light' | 'dark' | 'system';
   language: string;
-}): Promise<void> => {
+}): Promise<boolean> => {
   try {
     const { error } = await supabase.rpc('save_user_settings', {
-      p_user_id: userId as string,
+      p_user_id: userId,
       p_theme: theme,
       p_language: language,
     });
 
     if (error) throw error;
+    return true;
   } catch (error) {
     console.error('Error saving user settings:', error);
-    throw error;
+    return false;
   }
 };
 
@@ -33,10 +34,10 @@ export const saveUserSettings = async ({
  */
 export const getUserSettings = async (
   userId: string
-): Promise<UserSettings | null> => {
+): Promise<UserSettings> => {
   try {
     const { data, error } = await supabase.rpc('get_user_settings', {
-      p_user_id: userId as string,
+      p_user_id: userId,
     });
 
     if (error) throw error;
@@ -71,14 +72,15 @@ export const getUserSettings = async (
  */
 export const createDefaultUserSettings = async (
   userId: string
-): Promise<void> => {
+): Promise<boolean> => {
   try {
-    await saveUserSettings({
+    return await saveUserSettings({
       userId,
       theme: 'system',
       language: 'en',
     });
   } catch (error) {
     console.error('Error creating default user settings:', error);
+    return false;
   }
 };
