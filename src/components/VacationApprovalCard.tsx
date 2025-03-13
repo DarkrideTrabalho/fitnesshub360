@@ -43,7 +43,7 @@ const VacationApprovalCard: React.FC<VacationApprovalCardProps> = ({
         )}
         
         <div className="text-xs text-slate-500">
-          Request made on {format(new Date(vacation.createdAt), "MMM d, yyyy")}
+          Request made on {format(new Date(vacation.created_at || new Date()), "MMM d, yyyy")}
         </div>
       </CardContent>
       <CardFooter className="p-4 bg-slate-50 flex justify-end gap-2">

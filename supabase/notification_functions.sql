@@ -47,3 +47,40 @@ BEGIN
     ORDER BY created_at DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Create a function to save user settings
+CREATE OR REPLACE FUNCTION save_user_settings(
+    p_user_id UUID,
+    p_theme TEXT,
+    p_language TEXT
+) RETURNS void AS $$
+BEGIN
+    INSERT INTO user_settings (user_id, theme, language)
+    VALUES (p_user_id, p_theme, p_language)
+    ON CONFLICT (user_id) 
+    DO UPDATE SET 
+        theme = p_theme,
+        language = p_language,
+        updated_at = NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a function to get user settings
+CREATE OR REPLACE FUNCTION get_user_settings(
+    p_user_id UUID
+) RETURNS JSON AS $$
+DECLARE
+    settings_record user_settings%ROWTYPE;
+BEGIN
+    SELECT * INTO settings_record FROM user_settings WHERE user_id = p_user_id;
+    
+    IF NOT FOUND THEN
+        RETURN json_build_object(
+            'theme', 'system',
+            'language', 'en'
+        );
+    END IF;
+    
+    RETURN row_to_json(settings_record);
+END;
+$$ LANGUAGE plpgsql;

@@ -1,121 +1,145 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export interface Notification {
-  id: string;
-  user_id: string | null;
+  id?: string;
+  user_id?: string | null;
   title: string;
   message: string;
   type: string;
-  read: boolean;
-  created_at: string;
+  read?: boolean;
+  created_at?: string;
 }
 
 /**
- * Creates a new notification
- * 
- * @param userId User ID or null for system-wide notifications
+ * Creates a new notification for a user
+ * @param userId The ID of the user to send the notification to (null for system-wide notifications)
  * @param title Notification title
  * @param message Notification message
- * @param type Notification type (e.g., 'info', 'warning', 'error')
- * @returns Promise that resolves when notification is created
+ * @param type Type of notification (info, warning, error, success, etc.)
  */
 export const createNotification = async (
   userId: string | null,
   title: string,
   message: string,
   type: string
-): Promise<void> => {
+): Promise<string | null> => {
   try {
-    // Try to use RPC first
-    const { error: rpcError } = await supabase.rpc('create_notification', {
-      p_user_id: userId,
-      p_title: title,
-      p_message: message,
-      p_type: type
-    });
+    console.log(`Creating notification for user ${userId || 'system'}: ${title}`);
     
-    // If RPC fails (e.g., function doesn't exist), fallback to direct insert
-    if (rpcError) {
-      console.warn("RPC failed, falling back to direct insert:", rpcError.message);
+    // Try to use RPC function first
+    try {
+      const { data, error } = await supabase.rpc('create_notification', {
+        p_user_id: userId as any,
+        p_title: title,
+        p_message: message,
+        p_type: type
+      });
       
-      // Fallback to direct insert if RPC fails
-      const { error: insertError } = await supabase
-        .from('notifications')
-        .insert([{
-          user_id: userId,
-          title,
-          message,
-          type,
-          read: false
-        }]);
-      
-      if (insertError) {
-        console.error("Error creating notification:", insertError);
-        throw new Error(`Failed to create notification: ${insertError.message}`);
+      if (error) {
+        throw error;
       }
+      
+      console.log('Notification created via RPC');
+      return 'success';
+    } catch (rpcError) {
+      console.warn('RPC function failed, falling back to direct insert', rpcError);
+      
+      // Fallback to direct insert
+      const notification: Notification = {
+        user_id: userId,
+        title,
+        message,
+        type,
+        read: false
+      };
+      
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert([notification])
+        .select();
+        
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Notification created via direct insert');
+      return data?.[0]?.id || null;
     }
   } catch (error) {
-    console.error("Error in createNotification:", error);
-    throw error;
+    console.error('Error creating notification:', error);
+    toast.error('Failed to create notification');
+    return null;
   }
 };
 
 /**
  * Marks a notification as read
- * 
- * @param notificationId ID of the notification to mark as read
- * @returns Promise that resolves when notification is marked as read
+ * @param notificationId The ID of the notification to mark as read
  */
-export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
   try {
-    // Try to use RPC first
-    const { error: rpcError } = await supabase.rpc('mark_notification_read', {
-      p_notification_id: notificationId
-    });
+    console.log(`Marking notification ${notificationId} as read`);
     
-    // If RPC fails, fallback to direct update
-    if (rpcError) {
-      console.warn("RPC failed, falling back to direct update:", rpcError.message);
+    // Try to use RPC function first
+    try {
+      const { data, error } = await supabase.rpc('mark_notification_read', {
+        p_notification_id: notificationId as any
+      });
       
-      const { error: updateError } = await supabase
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Notification marked as read via RPC');
+      return true;
+    } catch (rpcError) {
+      console.warn('RPC function failed, falling back to direct update', rpcError);
+      
+      // Fallback to direct update
+      const { error } = await supabase
         .from('notifications')
         .update({ read: true })
         .eq('id', notificationId);
-      
-      if (updateError) {
-        console.error("Error marking notification as read:", updateError);
-        throw new Error(`Failed to mark notification as read: ${updateError.message}`);
+        
+      if (error) {
+        throw error;
       }
+      
+      console.log('Notification marked as read via direct update');
+      return true;
     }
   } catch (error) {
-    console.error("Error in markNotificationAsRead:", error);
-    throw error;
+    console.error('Error marking notification as read:', error);
+    toast.error('Failed to mark notification as read');
+    return false;
   }
 };
 
 /**
- * Gets all notifications for a user, including system-wide notifications
- * 
- * @param userId User ID
- * @returns Promise that resolves to an array of notifications
+ * Gets all notifications for a user
+ * @param userId The ID of the user to get notifications for
  */
 export const getUserNotifications = async (userId: string): Promise<Notification[]> => {
   try {
+    console.log(`Getting notifications for user ${userId}`);
+    
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .or(`user_id.eq.${userId},user_id.is.null`)
       .order('created_at', { ascending: false });
-    
+      
     if (error) {
-      console.error("Error fetching notifications:", error);
-      throw new Error(`Failed to fetch notifications: ${error.message}`);
+      throw error;
     }
     
-    return data || [];
+    console.log(`Found ${data.length} notifications`);
+    return data as Notification[];
   } catch (error) {
-    console.error("Error in getUserNotifications:", error);
-    throw error;
+    console.error('Error getting user notifications:', error);
+    toast.error('Failed to load notifications');
+    return [];
   }
 };
