@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -386,6 +385,37 @@ export interface Database {
           created_at?: string | null
         }
         Relationships: []
+      }
+      user_settings: {
+        Row: {
+          user_id: string
+          theme: string
+          language: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          user_id: string
+          theme?: string
+          language?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          user_id?: string
+          theme?: string
+          language?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

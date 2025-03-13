@@ -328,6 +328,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          language: string
+          theme: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          language?: string
+          theme?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          language?: string
+          theme?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vacations: {
         Row: {
           created_at: string | null
@@ -366,7 +390,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_settings: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      save_user_settings: {
+        Args: {
+          p_user_id: string
+          p_theme: string
+          p_language: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
