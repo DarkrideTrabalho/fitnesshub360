@@ -1,87 +1,66 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserSettings } from '@/lib/types';
-
-interface SupabaseUserSettings {
-  theme: string;
-  language: string;
-}
+import { UserSettings, SupabaseUserSettings } from '@/lib/types';
+import { toast } from 'sonner';
 
 /**
- * Save user settings to the database
+ * Save user settings to Supabase
  */
-export const saveUserSettings = async ({
-  userId,
-  theme,
-  language,
-}: UserSettings): Promise<boolean> => {
+export const saveUserSettings = async (
+  userId: string,
+  settings: UserSettings
+): Promise<boolean> => {
   try {
-    const { error } = await supabase.rpc('save_user_settings', {
-      p_user_id: userId,
-      p_theme: theme,
-      p_language: language,
-    });
+    const { error } = await supabase.rpc(
+      'save_user_settings', 
+      {
+        p_user_id: userId,
+        p_theme: settings.theme,
+        p_language: settings.language
+      }
+    );
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error saving user settings:', error);
+      toast.error('Failed to save settings');
+      return false;
+    }
+
+    toast.success('Settings saved successfully');
     return true;
   } catch (error) {
-    console.error('Error saving user settings:', error);
+    console.error('Exception saving user settings:', error);
+    toast.error('An error occurred while saving settings');
     return false;
   }
 };
 
 /**
- * Get user settings from the database
+ * Get user settings from Supabase
  */
-export const getUserSettings = async (
-  userId: string
-): Promise<UserSettings> => {
+export const getUserSettings = async (userId: string): Promise<UserSettings> => {
   try {
-    const { data, error } = await supabase.rpc<SupabaseUserSettings>('get_user_settings', {
-      p_user_id: userId,
-    });
+    const { data, error } = await supabase.rpc<SupabaseUserSettings>(
+      'get_user_settings',
+      { p_user_id: userId }
+    );
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error getting user settings:', error);
+      return { theme: 'system', language: 'en' }; // Default settings
+    }
 
-    // Default settings if none are found
     if (!data) {
-      return {
-        theme: 'system',
-        language: 'en',
-        userId,
-      };
+      console.log('No settings found, returning defaults');
+      return { theme: 'system', language: 'en' }; // Default settings
     }
 
     return {
-      theme: (data.theme || 'system') as 'light' | 'dark' | 'system',
-      language: data.language || 'en',
-      userId,
+      theme: data.theme,
+      language: data.language
     };
   } catch (error) {
-    console.error('Error fetching user settings:', error);
-    // Return default settings on error
-    return {
-      theme: 'system',
-      language: 'en',
-      userId,
-    };
-  }
-};
-
-/**
- * Create default settings for a new user
- */
-export const createDefaultUserSettings = async (
-  userId: string
-): Promise<boolean> => {
-  try {
-    return await saveUserSettings({
-      userId,
-      theme: 'system',
-      language: 'en',
-    });
-  } catch (error) {
-    console.error('Error creating default user settings:', error);
-    return false;
+    console.error('Exception getting user settings:', error);
+    return { theme: 'system', language: 'en' }; // Default settings
   }
 };

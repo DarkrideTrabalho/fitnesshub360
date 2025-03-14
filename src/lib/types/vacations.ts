@@ -1,4 +1,3 @@
-
 // Vacation types
 export interface Vacation {
   id: string;
@@ -15,6 +14,26 @@ export interface Vacation {
   start_date?: Date;
   end_date?: Date;
   created_at?: string;
+}
+
+// Function to convert database vacation format to application format
+export function convertDbVacationToAppVacation(dbVacation: any): Vacation {
+  return {
+    id: dbVacation.id,
+    teacherId: dbVacation.teacher_id || '',
+    teacherName: dbVacation.teacher_name || '',
+    startDate: new Date(dbVacation.start_date),
+    endDate: new Date(dbVacation.end_date),
+    reason: dbVacation.reason,
+    approved: dbVacation.approved || false,
+    createdAt: new Date(dbVacation.created_at),
+    // Keep original fields for compatibility
+    teacher_id: dbVacation.teacher_id,
+    teacher_name: dbVacation.teacher_name,
+    start_date: new Date(dbVacation.start_date),
+    end_date: new Date(dbVacation.end_date),
+    created_at: dbVacation.created_at
+  };
 }
 
 // Mock vacations data

@@ -1,4 +1,3 @@
-
 // Fitness Class types
 export interface FitnessClass {
   id: string;
@@ -13,6 +12,39 @@ export interface FitnessClass {
   maxCapacity: number;
   enrolledCount: number;
   imageUrl?: string;
+  
+  // Database compatibility fields
+  teacher_id?: string;
+  start_time?: string;
+  end_time?: string;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Function to convert database class format to application format
+export function convertDbClassToAppClass(dbClass: any): FitnessClass {
+  return {
+    id: dbClass.id,
+    name: dbClass.name,
+    description: dbClass.description || '',
+    category: dbClass.category || '',
+    teacherId: dbClass.teacher_id || '',
+    teacherName: dbClass.teacher_name || '',
+    date: new Date(dbClass.date),
+    startTime: dbClass.start_time,
+    endTime: dbClass.end_time,
+    maxCapacity: dbClass.max_capacity || 0,
+    enrolledCount: dbClass.enrolled_count || 0,
+    imageUrl: dbClass.image_url,
+    // Keep the original fields for compatibility
+    teacher_id: dbClass.teacher_id,
+    start_time: dbClass.start_time,
+    end_time: dbClass.end_time,
+    image_url: dbClass.image_url,
+    created_at: dbClass.created_at,
+    updated_at: dbClass.updated_at
+  };
 }
 
 // Class Enrollment
