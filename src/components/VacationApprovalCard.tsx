@@ -15,19 +15,15 @@ const VacationApprovalCard = ({
   onApprove,
   onReject
 }: VacationApprovalCardProps) => {
-  // Use the appropriate property names from the Vacation interface
-  const startDate = vacation.startDate || vacation.start_date;
-  const endDate = vacation.endDate || vacation.end_date;
-  
   // Format dates for display
-  const formattedStartDate = startDate ? new Date(startDate).toLocaleDateString() : '';
-  const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString() : '';
+  const formattedStartDate = vacation.startDate ? new Date(vacation.startDate).toLocaleDateString() : '';
+  const formattedEndDate = vacation.endDate ? new Date(vacation.endDate).toLocaleDateString() : '';
   
   return (
     <div className="bg-white border border-amber-100 rounded-lg p-4 shadow-sm">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="font-medium text-slate-900">{vacation.teacherName || vacation.teacher_name}</h3>
+          <h3 className="font-medium text-slate-900">{vacation.teacherName}</h3>
           <div className="flex items-center text-sm text-slate-500 mt-1">
             <Calendar className="h-4 w-4 mr-1 text-amber-500" />
             <span>

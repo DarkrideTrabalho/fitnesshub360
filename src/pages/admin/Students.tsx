@@ -49,6 +49,8 @@ const StudentsPage = () => {
             avatarUrl: student.avatar_url,
             taxNumber: student.tax_number,
             phoneNumber: student.phone_number,
+            userId: student.user_id,
+            membershipStatus: student.membership_status || 'active'
           }));
           setStudents(transformedStudents);
         }

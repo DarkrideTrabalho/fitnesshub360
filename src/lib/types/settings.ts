@@ -14,6 +14,9 @@ export interface Theme {
 export interface Language {
   value: string;
   label: string;
+  code?: string;
+  flag?: string;
+  name?: string;
 }
 
 export const AVAILABLE_THEMES: Theme[] = [
@@ -23,7 +26,7 @@ export const AVAILABLE_THEMES: Theme[] = [
 ];
 
 export const AVAILABLE_LANGUAGES: Language[] = [
-  { value: 'en', label: 'English' },
-  { value: 'pt', label: 'Portuguese' },
-  { value: 'es', label: 'Spanish' }
+  { value: 'en', label: 'English', code: 'en', flag: '🇬🇧', name: 'English' },
+  { value: 'pt', label: 'Portuguese', code: 'pt', flag: '🇵🇹', name: 'Portuguese' },
+  { value: 'es', label: 'Spanish', code: 'es', flag: '🇪🇸', name: 'Spanish' }
 ];

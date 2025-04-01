@@ -16,7 +16,7 @@ export interface UserProfile {
   userId: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   avatar?: string;
   createdAt: Date;
 }

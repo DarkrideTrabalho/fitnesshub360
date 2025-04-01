@@ -31,7 +31,7 @@ export const getUserSettings = async (userId: string): Promise<UserSettings | nu
 
     return {
       userId: data.user_id,
-      theme: data.theme,
+      theme: data.theme as 'light' | 'dark' | 'system',
       language: data.language
     };
   } catch (error) {
@@ -93,6 +93,9 @@ export const updateUserSettings = async (
     return null;
   }
 };
+
+// Added to match expected export
+export const saveUserSettings = updateUserSettings;
 
 // Get available themes
 export const getAvailableThemes = () => AVAILABLE_THEMES;

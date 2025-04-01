@@ -1,4 +1,3 @@
-
 -- Create tables with improved structure
 
 -- Create admin profiles table
@@ -83,8 +82,7 @@ CREATE TABLE IF NOT EXISTS vacations (
     reason TEXT,
     approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    CONSTRAINT check_dates CHECK (start_date <= end_date)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Create notifications table
