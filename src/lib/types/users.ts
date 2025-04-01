@@ -25,6 +25,10 @@ export interface Admin extends UserProfile {
 export interface Teacher extends UserProfile {
   specialties?: string[];
   onVacation: boolean;
+  vacationDates?: {
+    start: Date;
+    end: Date;
+  };
 }
 
 export interface Student extends UserProfile {
@@ -34,4 +38,5 @@ export interface Student extends UserProfile {
   taxNumber?: string;
   phoneNumber?: string;
   billingAddress?: string;
+  enrolledClasses?: string[];
 }

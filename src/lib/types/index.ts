@@ -5,3 +5,4 @@ export * from './classes';
 export * from './vacations';
 export * from './notifications';
 export * from './settings';
+export * from './mocks';
