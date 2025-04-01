@@ -6,13 +6,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface SettingsContextType {
-  settings: UserSettings & { userId: string };
+  settings: UserSettings;
   updateTheme: (theme: 'light' | 'dark' | 'system') => Promise<void>;
   updateLanguage: (language: string) => Promise<void>;
   isLoading: boolean;
 }
 
-const defaultSettings: UserSettings & { userId: string } = {
+const defaultSettings: UserSettings = {
   theme: 'system',
   language: 'en',
   userId: ''
@@ -21,7 +21,7 @@ const defaultSettings: UserSettings & { userId: string } = {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  const [settings, setSettings] = useState<UserSettings & { userId: string }>(defaultSettings);
+  const [settings, setSettings] = useState<UserSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
@@ -39,6 +39,9 @@ export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ childr
         });
         
         setIsLoading(false);
+        
+        // Apply the theme
+        applyTheme(storedTheme);
         return;
       }
       
@@ -47,17 +50,43 @@ export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ childr
         
         // Load settings from database for authenticated users
         const userSettings = await getUserSettings(user.id);
-        setSettings(userSettings);
-        
-        // Apply the theme
-        applyTheme(userSettings.theme as 'light' | 'dark' | 'system');
-        
-        // Store in localStorage as fallback
-        localStorage.setItem('theme', userSettings.theme);
-        localStorage.setItem('language', userSettings.language);
+        if (userSettings) {
+          setSettings(userSettings);
+          
+          // Apply the theme
+          applyTheme(userSettings.theme);
+          
+          // Store in localStorage as fallback
+          localStorage.setItem('theme', userSettings.theme);
+          localStorage.setItem('language', userSettings.language);
+        } else {
+          // Use defaults if no settings found
+          const defaultTheme = 'system';
+          const defaultLanguage = 'en';
+          
+          setSettings({
+            theme: defaultTheme,
+            language: defaultLanguage,
+            userId: user.id
+          });
+          
+          applyTheme(defaultTheme);
+          localStorage.setItem('theme', defaultTheme);
+          localStorage.setItem('language', defaultLanguage);
+        }
       } catch (error) {
         console.error('Error loading settings:', error);
         toast.error('Failed to load user settings');
+        
+        // Use defaults on error
+        const defaultTheme = 'system';
+        setSettings({
+          theme: defaultTheme,
+          language: 'en',
+          userId: user?.id || ''
+        });
+        
+        applyTheme(defaultTheme);
       } finally {
         setIsLoading(false);
       }

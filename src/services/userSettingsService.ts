@@ -1,6 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
-import { UserSettings, AVAILABLE_THEMES, AVAILABLE_LANGUAGES } from "@/lib/types";
+import { UserSettings, AVAILABLE_THEMES, AVAILABLE_LANGUAGES } from "@/lib/types/settings";
 
 // Get user settings
 export const getUserSettings = async (userId: string): Promise<UserSettings | null> => {

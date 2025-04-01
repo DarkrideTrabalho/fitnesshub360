@@ -14,9 +14,9 @@ export interface Theme {
 export interface Language {
   value: string;
   label: string;
-  code?: string;
-  flag?: string;
-  name?: string;
+  code: string;
+  flag: string;
+  name: string;
 }
 
 export const AVAILABLE_THEMES: Theme[] = [
