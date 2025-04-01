@@ -7,14 +7,13 @@ import { toast } from 'sonner';
  * Save user settings to Supabase
  */
 export const saveUserSettings = async (
-  userId: string,
-  settings: UserSettings
+  settings: UserSettings & { userId: string }
 ): Promise<boolean> => {
   try {
     const { error } = await supabase.rpc(
       'save_user_settings', 
       {
-        p_user_id: userId,
+        p_user_id: settings.userId,
         p_theme: settings.theme,
         p_language: settings.language
       }
@@ -38,7 +37,7 @@ export const saveUserSettings = async (
 /**
  * Get user settings from Supabase
  */
-export const getUserSettings = async (userId: string): Promise<UserSettings> => {
+export const getUserSettings = async (userId: string): Promise<UserSettings & { userId: string }> => {
   try {
     const { data, error } = await supabase.rpc<SupabaseUserSettings>(
       'get_user_settings',
@@ -47,20 +46,21 @@ export const getUserSettings = async (userId: string): Promise<UserSettings> => 
 
     if (error) {
       console.error('Error getting user settings:', error);
-      return { theme: 'system', language: 'en' }; // Default settings
+      return { theme: 'system', language: 'en', userId };
     }
 
     if (!data) {
       console.log('No settings found, returning defaults');
-      return { theme: 'system', language: 'en' }; // Default settings
+      return { theme: 'system', language: 'en', userId };
     }
 
     return {
       theme: data.theme,
-      language: data.language
+      language: data.language,
+      userId: data.user_id
     };
   } catch (error) {
     console.error('Exception getting user settings:', error);
-    return { theme: 'system', language: 'en' }; // Default settings
+    return { theme: 'system', language: 'en', userId };
   }
 };

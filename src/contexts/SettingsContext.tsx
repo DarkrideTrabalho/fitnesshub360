@@ -6,13 +6,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface SettingsContextType {
-  settings: UserSettings;
+  settings: UserSettings & { userId: string };
   updateTheme: (theme: 'light' | 'dark' | 'system') => Promise<void>;
   updateLanguage: (language: string) => Promise<void>;
   isLoading: boolean;
 }
 
-const defaultSettings: UserSettings = {
+const defaultSettings: UserSettings & { userId: string } = {
   theme: 'system',
   language: 'en',
   userId: ''
@@ -21,7 +21,7 @@ const defaultSettings: UserSettings = {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  const [settings, setSettings] = useState<UserSettings>(defaultSettings);
+  const [settings, setSettings] = useState<UserSettings & { userId: string }>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
@@ -50,7 +50,7 @@ export const SettingsProvider: React.FC<{children: React.ReactNode}> = ({ childr
         setSettings(userSettings);
         
         // Apply the theme
-        applyTheme(userSettings.theme);
+        applyTheme(userSettings.theme as 'light' | 'dark' | 'system');
         
         // Store in localStorage as fallback
         localStorage.setItem('theme', userSettings.theme);
