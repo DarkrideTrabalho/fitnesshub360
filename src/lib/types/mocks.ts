@@ -1,5 +1,5 @@
 
-import { User, Teacher, Student } from './users';
+import { User, UserRole, Teacher, Student } from './users';
 import { FitnessClass } from './classes';
 import { Vacation } from './vacations';
 
@@ -9,19 +9,22 @@ export const MOCK_USERS: User[] = [
     id: 'usr-1',
     email: 'admin@example.com',
     name: 'Admin User',
-    role: 'admin'
+    role: 'admin',
+    createdAt: new Date('2023-01-01')
   },
   {
     id: 'usr-2',
     email: 'teacher1@example.com',
     name: 'John Trainer',
-    role: 'teacher'
+    role: 'teacher',
+    createdAt: new Date('2023-01-15')
   },
   {
     id: 'usr-3',
     email: 'student1@example.com',
     name: 'Maria Student',
-    role: 'student'
+    role: 'student',
+    createdAt: new Date('2023-01-20')
   }
 ];
 
@@ -140,6 +143,7 @@ export const MOCK_VACATIONS: Vacation[] = [
   {
     id: 'vac-1',
     teacherId: 'tchr-2',
+    teacherName: 'Sarah Smith',
     startDate: new Date('2023-06-01'),
     endDate: new Date('2023-06-15'),
     reason: 'Family vacation',

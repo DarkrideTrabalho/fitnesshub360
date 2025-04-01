@@ -1,11 +1,14 @@
 
 // User Types
+export type UserRole = 'admin' | 'teacher' | 'student';
+
 export interface User {
   id: string;
   email: string;
   name?: string;
   avatar?: string;
-  role: 'admin' | 'teacher' | 'student';
+  role: UserRole;
+  createdAt?: Date;
 }
 
 export interface UserProfile {

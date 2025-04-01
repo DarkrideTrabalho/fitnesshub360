@@ -1,66 +1,101 @@
 
-import { supabase } from '@/lib/supabase';
-import { UserSettings, SupabaseUserSettings } from '@/lib/types';
-import { toast } from 'sonner';
+import { supabase } from "@/lib/supabase";
+import { UserSettings, AVAILABLE_THEMES, AVAILABLE_LANGUAGES } from "@/lib/types";
 
-/**
- * Save user settings to Supabase
- */
-export const saveUserSettings = async (
-  settings: UserSettings & { userId: string }
-): Promise<boolean> => {
+// Get user settings
+export const getUserSettings = async (userId: string): Promise<UserSettings | null> => {
   try {
-    const { error } = await supabase.rpc(
-      'save_user_settings', 
-      {
-        p_user_id: settings.userId,
-        p_theme: settings.theme,
-        p_language: settings.language
-      }
-    );
-
-    if (error) {
-      console.error('Error saving user settings:', error);
-      toast.error('Failed to save settings');
-      return false;
+    if (!userId) {
+      console.error("getUserSettings: No userId provided");
+      return null;
     }
 
-    toast.success('Settings saved successfully');
-    return true;
-  } catch (error) {
-    console.error('Exception saving user settings:', error);
-    toast.error('An error occurred while saving settings');
-    return false;
-  }
-};
-
-/**
- * Get user settings from Supabase
- */
-export const getUserSettings = async (userId: string): Promise<UserSettings & { userId: string }> => {
-  try {
-    const { data, error } = await supabase.rpc<SupabaseUserSettings>(
-      'get_user_settings',
-      { p_user_id: userId }
-    );
+    const { data, error } = await supabase
+      .from("user_settings")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
 
     if (error) {
-      console.error('Error getting user settings:', error);
-      return { theme: 'system', language: 'en', userId };
+      if (error.code === "PGRST116") {
+        // No settings found, create default settings
+        return createDefaultSettings(userId);
+      }
+      console.error("Error fetching user settings:", error);
+      return null;
     }
 
     if (!data) {
-      console.log('No settings found, returning defaults');
-      return { theme: 'system', language: 'en', userId };
+      return createDefaultSettings(userId);
     }
 
     return {
+      userId: data.user_id,
       theme: data.theme,
-      language: data.language,
-      userId: data.user_id
+      language: data.language
     };
   } catch (error) {
-    console.error('Exception getting user settings:', error);
-    return { theme: 'system', language: 'en', userId };
+    console.error("Exception in getUserSettings:", error);
+    return null;
   }
 };
+
+// Create default settings
+export const createDefaultSettings = async (userId: string): Promise<UserSettings | null> => {
+  try {
+    const defaultSettings: UserSettings = {
+      userId: userId,
+      theme: "system",
+      language: "en"
+    };
+
+    const { error } = await supabase.from("user_settings").insert([
+      {
+        user_id: defaultSettings.userId,
+        theme: defaultSettings.theme,
+        language: defaultSettings.language
+      }
+    ]);
+
+    if (error) {
+      console.error("Error creating default settings:", error);
+      return null;
+    }
+
+    return defaultSettings;
+  } catch (error) {
+    console.error("Exception in createDefaultSettings:", error);
+    return null;
+  }
+};
+
+// Update user settings
+export const updateUserSettings = async (
+  settings: UserSettings
+): Promise<UserSettings | null> => {
+  try {
+    const { error } = await supabase
+      .from("user_settings")
+      .update({
+        theme: settings.theme,
+        language: settings.language
+      })
+      .eq("user_id", settings.userId);
+
+    if (error) {
+      console.error("Error updating user settings:", error);
+      return null;
+    }
+
+    return settings;
+  } catch (error) {
+    console.error("Exception in updateUserSettings:", error);
+    return null;
+  }
+};
+
+// Get available themes
+export const getAvailableThemes = () => AVAILABLE_THEMES;
+
+// Get available languages
+export const getAvailableLanguages = () => AVAILABLE_LANGUAGES;

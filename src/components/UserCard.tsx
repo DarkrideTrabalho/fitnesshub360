@@ -22,7 +22,7 @@ interface ActionButton {
 
 interface UserCardProps {
   user: User | Teacher | Student;
-  onEdit?: (user: User) => void;
+  onEdit?: (user: any) => void;
   onDelete?: (userId: string) => void;
   editLabel?: string;
   buttons?: ActionButton[];
@@ -54,8 +54,8 @@ const UserCard: React.FC<UserCardProps> = ({
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={user.avatarUrl} alt={user.name} />
-              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback>{user.name ? getInitials(user.name) : 'U'}</AvatarFallback>
             </Avatar>
             <div>
               <h3 className="text-sm font-medium text-slate-900">{user.name}</h3>
@@ -141,10 +141,12 @@ const UserCard: React.FC<UserCardProps> = ({
           )}
         </div>
         
-        <div className="mt-3 text-xs text-slate-500 flex items-center">
-          <Calendar className="mr-1 h-3 w-3" />
-          Joined {format(user.createdAt, 'MMM d, yyyy')}
-        </div>
+        {'createdAt' in user && user.createdAt && (
+          <div className="mt-3 text-xs text-slate-500 flex items-center">
+            <Calendar className="mr-1 h-3 w-3" />
+            Joined {format(user.createdAt, 'MMM d, yyyy')}
+          </div>
+        )}
         
         {buttons && buttons.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">

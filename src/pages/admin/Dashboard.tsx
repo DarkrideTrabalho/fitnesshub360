@@ -4,13 +4,13 @@ import { Users, Calendar, Clock, Activity, AlertCircle, CreditCard } from "lucid
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
 import CalendarView from "@/components/CalendarView";
-import UserCard from "@/components/UserCard";
 import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_TEACHERS } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { Teacher } from "@/lib/types";
 
 const AdminDashboard = () => {
-  const [teachersOnVacation, setTeachersOnVacation] = useState(MOCK_TEACHERS.filter(teacher => teacher.onVacation));
+  const [teachersOnVacation, setTeachersOnVacation] = useState<Teacher[]>(MOCK_TEACHERS.filter(teacher => teacher.onVacation));
   const [overduePaymentsCount, setOverduePaymentsCount] = useState(0);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   
@@ -29,11 +29,12 @@ const AdminDashboard = () => {
         }
         
         if (data) {
-          const transformedTeachers = data.map(teacher => ({
+          const transformedTeachers: Teacher[] = data.map(teacher => ({
             id: teacher.id,
-            name: teacher.name,
-            email: teacher.email,
-            role: 'teacher' as const,
+            userId: teacher.user_id,
+            name: teacher.name || '',
+            email: teacher.email || '',
+            role: 'teacher',
             createdAt: new Date(teacher.created_at),
             specialties: teacher.specialties || [],
             onVacation: true,
@@ -41,7 +42,7 @@ const AdminDashboard = () => {
               start: new Date(teacher.vacations[0].start_date),
               end: new Date(teacher.vacations[0].end_date)
             } : undefined,
-            avatarUrl: teacher.avatar_url
+            avatar: teacher.avatar_url
           }));
           setTeachersOnVacation(transformedTeachers);
         }
@@ -160,9 +161,9 @@ const AdminDashboard = () => {
                       <div key={teacher.id} className="p-3 border border-slate-100 rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className="relative w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            {teacher.avatarUrl ? (
+                            {teacher.avatar ? (
                               <img
-                                src={teacher.avatarUrl}
+                                src={teacher.avatar}
                                 alt={teacher.name}
                                 className="w-full h-full rounded-full object-cover"
                               />

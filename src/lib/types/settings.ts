@@ -1,30 +1,29 @@
 
-// User settings types
+// Settings Types
 export interface UserSettings {
-  theme: string;
+  userId: string;
+  theme: 'light' | 'dark' | 'system';
   language: string;
 }
 
-// API response type for Supabase user settings
-export interface SupabaseUserSettings {
-  user_id: string;
-  theme: string;
-  language: string;
-  created_at?: string;
-  updated_at?: string;
+export interface Theme {
+  value: string;
+  label: string;
 }
 
-// Available languages for the application
 export interface Language {
-  code: string;
-  name: string;
-  flag: string;
+  value: string;
+  label: string;
 }
+
+export const AVAILABLE_THEMES: Theme[] = [
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'system', label: 'System' }
+];
 
 export const AVAILABLE_LANGUAGES: Language[] = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' }
+  { value: 'en', label: 'English' },
+  { value: 'pt', label: 'Portuguese' },
+  { value: 'es', label: 'Spanish' }
 ];
