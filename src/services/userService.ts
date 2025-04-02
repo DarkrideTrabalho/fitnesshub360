@@ -107,6 +107,10 @@ export const createUserProfile = async (userData: any, role: 'admin' | 'teacher'
         result = await supabase.from('teacher_profiles').insert(profileData);
         break;
       case 'student':
+        // Add membership_status if it's not already included
+        if (!profileData.membership_status && role === 'student') {
+          profileData.membership_status = 'active';
+        }
         result = await supabase.from('student_profiles').insert(profileData);
         break;
     }

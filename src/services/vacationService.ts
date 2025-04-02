@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Defining interface for vacation data
+// Defining interface for vacation data to match the database schema
 interface Vacation {
   id: string;
   user_id?: string;
@@ -22,7 +22,7 @@ export const requestVacation = async (teacherId: string, teacherName: string, st
     const { data, error } = await supabase
       .from('vacations')
       .insert({
-        teacher_id: teacherId, // This will be stored in user_id field
+        user_id: teacherId, // Store teacher ID in user_id field
         teacher_name: teacherName,
         start_date: startDate,
         end_date: endDate,
@@ -70,15 +70,11 @@ export const getPendingVacationRequests = async () => {
 // Function to approve or reject a vacation request
 export const handleVacationRequest = async (vacationId: string, isApproved: boolean) => {
   try {
-    // We need to use update data that matches the table schema
-    const updateData = {
-      // Use 'approved' field in custom data passed to RPC function if it exists
-      approved: isApproved
-    };
-
     const { data, error } = await supabase
       .from('vacations')
-      .update(updateData)
+      .update({
+        approved: isApproved
+      })
       .eq('id', vacationId)
       .select()
       .single();
@@ -97,11 +93,11 @@ export const handleVacationRequest = async (vacationId: string, isApproved: bool
       const today = new Date().toISOString().split('T')[0];
       
       if (vacation.start_date <= today && vacation.end_date >= today) {
-        // Use user_id field which stores the teacher ID in our current schema
+        // Use user_id field which stores the teacher ID in our schema
         await supabase
           .from('teacher_profiles')
           .update({ on_vacation: true })
-          .eq('id', vacation.teacher_id || vacation.user_id);
+          .eq('id', vacation.user_id);
       }
       
       // Create a notification
@@ -142,7 +138,7 @@ export const getTeacherVacations = async (teacherId: string) => {
     const { data, error } = await supabase
       .from('vacations')
       .select('*')
-      .eq('teacher_id', teacherId)
+      .eq('user_id', teacherId)
       .order('start_date', { ascending: false });
 
     if (error) {

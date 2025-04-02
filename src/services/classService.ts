@@ -2,10 +2,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Define interface for class data to avoid type errors
+// Define interface for class data
 interface ClassData {
   id?: string;
   teacher_id?: string;
+  teacher_name?: string;
   name: string;
   description?: string;
   category?: string;
@@ -104,7 +105,7 @@ export const deleteClass = async (classId: string) => {
   }
 };
 
-// Interface for filters to ensure type safety
+// Interface for filters
 interface ClassFilters {
   [key: string]: any;
 }
@@ -112,7 +113,7 @@ interface ClassFilters {
 // Function to get classes
 export const getClasses = async (filters: ClassFilters = {}) => {
   try {
-    let query = supabase.from('classes').select('*, teacher_profiles(name, id, avatar_url)');
+    let query = supabase.from('classes').select('*');
     
     // Apply filters if any
     if (filters) {
@@ -146,7 +147,7 @@ export const enrollStudentInClass = async (classId: string, studentId: string) =
       .select('id')
       .eq('class_id', classId)
       .eq('student_id', studentId)
-      .maybeSingle();  // Using maybeSingle instead of single to avoid errors
+      .maybeSingle();
 
     if (checkError) {
       console.error('Error checking existing enrollment:', checkError);

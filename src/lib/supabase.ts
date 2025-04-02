@@ -61,10 +61,11 @@ export const testSupabaseConnection = async () => {
       
       // Last resort: Try direct API call with URL from supabase object
       try {
-        const supabaseUrl = new URL(supabase.options.url);
-        const authResponse = await fetch(`${supabaseUrl.origin}/auth/v1/`, {
+        // Accessing URL and key safely by using the URL property directly
+        const url = new URL(supabase.restUrl);
+        const authResponse = await fetch(`${url.origin}/auth/v1/`, {
           headers: {
-            'apikey': supabase.options.global.headers.apikey,
+            'apikey': supabase.supabaseKey,
             'Content-Type': 'application/json'
           }
         });
