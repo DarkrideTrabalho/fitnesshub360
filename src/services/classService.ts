@@ -2,8 +2,25 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Define interface for class data to avoid type errors
+interface ClassData {
+  id?: string;
+  teacher_id?: string;
+  name: string;
+  description?: string;
+  category?: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  max_capacity?: number;
+  enrolled_count?: number;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Function to create a new class
-export const createClass = async (classData: any) => {
+export const createClass = async (classData: ClassData) => {
   try {
     const { data, error } = await supabase
       .from('classes')
@@ -27,7 +44,7 @@ export const createClass = async (classData: any) => {
 };
 
 // Function to update a class
-export const updateClass = async (classId: string, classData: any) => {
+export const updateClass = async (classId: string, classData: Partial<ClassData>) => {
   try {
     const { data, error } = await supabase
       .from('classes')
@@ -87,8 +104,13 @@ export const deleteClass = async (classId: string) => {
   }
 };
 
+// Interface for filters to ensure type safety
+interface ClassFilters {
+  [key: string]: any;
+}
+
 // Function to get classes
-export const getClasses = async (filters = {}) => {
+export const getClasses = async (filters: ClassFilters = {}) => {
   try {
     let query = supabase.from('classes').select('*, teacher_profiles(name, id, avatar_url)');
     
@@ -124,9 +146,9 @@ export const enrollStudentInClass = async (classId: string, studentId: string) =
       .select('id')
       .eq('class_id', classId)
       .eq('student_id', studentId)
-      .single();
+      .maybeSingle();  // Using maybeSingle instead of single to avoid errors
 
-    if (checkError && checkError.code !== 'PGRST116') {
+    if (checkError) {
       console.error('Error checking existing enrollment:', checkError);
       toast.error('Failed to check enrollment status');
       return { success: false, error: checkError };

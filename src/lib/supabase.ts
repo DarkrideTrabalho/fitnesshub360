@@ -59,11 +59,12 @@ export const testSupabaseConnection = async () => {
     } catch (tableError) {
       console.error('Exception testing table connection:', tableError);
       
-      // Last resort: Try auth API
+      // Last resort: Try direct API call with URL from supabase object
       try {
-        const authResponse = await fetch(`${supabase.supabaseUrl}/auth/v1/`, {
+        const supabaseUrl = new URL(supabase.options.url);
+        const authResponse = await fetch(`${supabaseUrl.origin}/auth/v1/`, {
           headers: {
-            'apikey': supabase.supabaseKey,
+            'apikey': supabase.options.global.headers.apikey,
             'Content-Type': 'application/json'
           }
         });

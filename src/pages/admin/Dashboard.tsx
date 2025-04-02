@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { Users, Calendar, Clock, Activity, AlertCircle, CreditCard } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
 import CalendarView from "@/components/CalendarView";
 import { MOCK_CLASSES, MOCK_STUDENTS, MOCK_TEACHERS } from "@/lib/types";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Teacher } from "@/lib/types";
 
@@ -29,21 +28,28 @@ const AdminDashboard = () => {
         }
         
         if (data) {
-          const transformedTeachers: Teacher[] = data.map(teacher => ({
-            id: teacher.id,
-            userId: teacher.user_id,
-            name: teacher.name || '',
-            email: teacher.email || '',
-            role: 'teacher',
-            createdAt: new Date(teacher.created_at),
-            specialties: teacher.specialties || [],
-            onVacation: true,
-            vacationDates: teacher.vacations && teacher.vacations.length > 0 ? {
-              start: new Date(teacher.vacations[0].start_date),
-              end: new Date(teacher.vacations[0].end_date)
-            } : undefined,
-            avatar: teacher.avatar_url
-          }));
+          const transformedTeachers: Teacher[] = data.map(teacher => {
+            // Ensure vacations is an array and has elements before accessing
+            const vacations = Array.isArray(teacher.vacations) && teacher.vacations.length > 0 
+              ? teacher.vacations[0] 
+              : null;
+              
+            return {
+              id: teacher.id,
+              userId: teacher.user_id,
+              name: teacher.name || '',
+              email: teacher.email || '',
+              role: 'teacher',
+              createdAt: new Date(teacher.created_at),
+              specialties: teacher.specialties || [],
+              onVacation: true,
+              vacationDates: vacations ? {
+                start: new Date(vacations.start_date),
+                end: new Date(vacations.end_date)
+              } : undefined,
+              avatar: teacher.avatar_url
+            };
+          });
           setTeachersOnVacation(transformedTeachers);
         }
       } catch (error) {

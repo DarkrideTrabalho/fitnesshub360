@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Plus, Users, Search, X, Send, Phone, CreditCard, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,9 +50,9 @@ const StudentsPage = () => {
             taxNumber: student.tax_number,
             phoneNumber: student.phone_number,
             userId: student.user_id,
-            // Check if membership_status exists, use a default value if not
-            membershipStatus: 'membership_status' in student ? student.membership_status : 'active'
+            membershipStatus: (student.membership_status as string) || 'active'
           }));
+          
           setStudents(transformedStudents);
         }
       } catch (error) {
