@@ -36,24 +36,22 @@ const StudentsPage = () => {
           return;
         }
         
-        if (data && data.length > 0) {
-          const mappedStudents = data.map(student => {
-            return {
-              id: student.id,
-              userId: student.user_id,
-              name: student.name || 'Unknown',
-              email: student.email || '',
-              role: 'student' as const,
-              createdAt: student.created_at ? new Date(student.created_at) : new Date(),
-              membershipType: student.membership_type || 'Basic',
-              membershipStatus: student.membership_status as string || 'active',
-              lastCheckIn: student.last_check_in ? new Date(student.last_check_in) : null,
-              enrolledClasses: [],
-              avatarUrl: student.avatar_url || '',
-              taxNumber: student.tax_number || '',
-              phoneNumber: student.phone_number || '',
-            };
-          });
+        if (data) {
+          const mappedStudents = data.map(student => ({
+            id: student.id,
+            name: student.name || 'Unknown',
+            email: student.email || '',
+            role: 'student' as const,
+            createdAt: new Date(student.created_at),
+            membershipType: student.membership_type || 'Standard',
+            lastCheckIn: student.last_check_in ? new Date(student.last_check_in) : new Date(),
+            enrolledClasses: [],
+            avatarUrl: student.avatar_url || '',
+            taxNumber: student.tax_number || '',
+            phoneNumber: student.phone_number || '',
+            userId: student.user_id,
+            membershipStatus: 'Active' as string
+          }));
           
           setStudents(mappedStudents);
         }

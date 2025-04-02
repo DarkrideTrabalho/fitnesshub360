@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import {
@@ -6,580 +5,474 @@ import {
   TableBody,
   TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
+import { UserPlus, Pencil, Trash2, Calendar, Check, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Plus, Edit, Trash2, UserCheck, Calendar, Mail, User, Check, X } from 'lucide-react';
-import { UserRole, Teacher, Vacation } from '@/lib/types';
-import { faker } from '@faker-js/faker';
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import UserCard from '@/components/UserCard';
-import VacationApprovalCard from '@/components/VacationApprovalCard';
+import { useAuth } from '@/contexts/AuthContext';
+import { createTeacherProfile, deleteTeacherProfile, fetchTeacherProfiles, updateTeacherProfile } from '@/services/userService';
+import { format } from 'date-fns';
+import { DatePicker } from "@/components/ui/date-picker"
+import { CalendarIcon } from "@radix-ui/react-icons"
+import { cn } from "@/lib/utils"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { requestVacation, getTeacherVacations, handleVacationRequest, Vacation } from '@/services/vacationService';
 
-interface TeacherFormProps {
-  open: boolean;
-  onClose: () => void;
-  onSave: (teacher: Teacher) => void;
-  teacher?: Teacher;
+interface Teacher {
+  id: string;
+  name: string;
+  email: string;
+  role: 'teacher';
+  createdAt: Date;
+  classes: string[];
+  avatarUrl: string;
+  taxNumber: string;
+  phoneNumber: string;
+  userId: string;
+  onVacation: boolean;
 }
 
-const TeacherForm: React.FC<TeacherFormProps> = ({ open, onClose, onSave, teacher }) => {
-  const [name, setName] = useState(teacher?.name || '');
-  const [email, setEmail] = useState(teacher?.email || '');
-  const [specialties, setSpecialties] = useState(teacher?.specialties?.join(', ') || '');
-  const [avatarUrl, setAvatarUrl] = useState(teacher?.avatar || 'https://randomuser.me/api/portraits/men/' + Math.floor(Math.random() * 100) + '.jpg');
+const TeachersPage = () => {
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [newTeacherName, setNewTeacherName] = useState('');
+  const [newTeacherEmail, setNewTeacherEmail] = useState('');
+  const { user } = useAuth();
 
-  const handleSubmit = () => {
-    const newTeacher: Teacher = {
-      id: teacher?.id || faker.string.uuid(),
-      userId: teacher?.userId || faker.string.uuid(),
-      name,
-      email,
-      specialties: specialties.split(',').map(s => s.trim()),
-      onVacation: teacher?.onVacation || false,
-      avatar: avatarUrl,
-      role: 'teacher',
-      createdAt: teacher?.createdAt || new Date(),
-    };
-    onSave(newTeacher);
-    onClose();
+  const refetchTeachers = async () => {
+    setLoading(true);
+    try {
+      const fetchedTeachers = await fetchTeacherProfiles();
+      setTeachers(fetchedTeachers);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+      toast.error("Failed to fetch teachers");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{teacher ? 'Edit Teacher' : 'Create Teacher'}</DialogTitle>
-          <DialogDescription>
-            {teacher ? 'Edit teacher details.' : 'Add a new teacher to the list.'}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="flex items-center justify-center mb-4">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarUrl} alt={name} />
-              <AvatarFallback>{name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
-            </Avatar>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="email" className="text-right">
-              Email
-            </Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="avatar" className="text-right">
-              Avatar URL
-            </Label>
-            <Input id="avatar" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} className="col-span-3" placeholder="https://example.com/avatar.jpg" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="specialties" className="text-right">
-              Specialties
-            </Label>
-            <Input
-              id="specialties"
-              value={specialties}
-              onChange={(e) => setSpecialties(e.target.value)}
-              className="col-span-3"
-              placeholder="e.g., Yoga, Pilates, Zumba"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="button" onClick={handleSubmit}>
-            {teacher ? 'Update Teacher' : 'Create Teacher'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
+  useEffect(() => {
+    refetchTeachers();
+  }, []);
 
-interface VacationRequestFormProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (vacation: Vacation) => void;
-  teacher: Teacher;
-}
-
-const VacationRequestForm: React.FC<VacationRequestFormProps> = ({ open, onClose, onSubmit, teacher }) => {
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-  const [reason, setReason] = useState<string>('');
-
-  const handleSubmit = () => {
-    if (!startDate || !endDate) {
-      toast.error("Please select start and end dates");
+  const handleCreateTeacher = async () => {
+    if (!newTeacherName || !newTeacherEmail) {
+      toast.error('Name and email are required');
       return;
     }
 
-    const vacation: Vacation = {
-      id: faker.string.uuid(),
-      teacherId: teacher.id,
-      teacherName: teacher.name,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
-      reason,
-      approved: false,
-      createdAt: new Date(),
-    };
+    try {
+      if (!user) {
+        toast.error('User not authenticated');
+        return;
+      }
 
-    onSubmit(vacation);
-    onClose();
+      await createTeacherProfile(newTeacherName, newTeacherEmail, user.id);
+      toast.success('Teacher created successfully');
+      setOpen(false);
+      setNewTeacherName('');
+      setNewTeacherEmail('');
+      await refetchTeachers();
+    } catch (error) {
+      console.error("Error creating teacher:", error);
+      toast.error("Failed to create teacher");
+    }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Request Vacation</DialogTitle>
-          <DialogDescription>
-            Create a vacation request for {teacher.name}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="startDate" className="text-right">
-              Start Date
-            </Label>
-            <Input 
-              id="startDate" 
-              type="date" 
-              value={startDate} 
-              onChange={(e) => setStartDate(e.target.value)} 
-              className="col-span-3" 
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="endDate" className="text-right">
-              End Date
-            </Label>
-            <Input 
-              id="endDate" 
-              type="date" 
-              value={endDate} 
-              onChange={(e) => setEndDate(e.target.value)} 
-              className="col-span-3" 
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="reason" className="text-right">
-              Reason
-            </Label>
-            <Input
-              id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="col-span-3"
-              placeholder="Reason for vacation request"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="button" onClick={handleSubmit}>
-            Submit Request
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const TeachersPage: React.FC = () => {
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [vacations, setVacations] = useState<Vacation[]>([]);
-  const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [specialtyFilter, setSpecialtyFilter] = useState<string>('all');
-  const [open, setOpen] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
-  const [vacationFormOpen, setVacationFormOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
-
-  // Get unique specialties from all teachers
-  const allSpecialties = React.useMemo(() => {
-    const specialties = new Set<string>();
-    teachers.forEach(teacher => {
-      teacher.specialties?.forEach(specialty => {
-        specialties.add(specialty);
-      });
-    });
-    return Array.from(specialties);
-  }, [teachers]);
-
-  useEffect(() => {
-    // Load teachers from localStorage on component mount
-    const storedTeachers = localStorage.getItem('teachers');
-    if (storedTeachers) {
-      setTeachers(JSON.parse(storedTeachers));
-    } else {
-      // If no teachers in localStorage, initialize with mock data
-      const mockTeachers: Teacher[] = Array(8).fill(null).map((_, i) => ({
-        id: faker.string.uuid(),
-        userId: faker.string.uuid(),
-        name: faker.person.fullName(),
-        email: faker.internet.email(),
-        specialties: [faker.lorem.word(), faker.lorem.word()],
-        onVacation: faker.datatype.boolean(),
-        avatar: 'https://randomuser.me/api/portraits/men/' + Math.floor(Math.random() * 100) + '.jpg',
-        role: 'teacher',
-        createdAt: faker.date.past(),
-      }));
-      localStorage.setItem('teachers', JSON.stringify(mockTeachers));
-      setTeachers(mockTeachers);
+  const handleDeleteTeacher = async (teacherId: string) => {
+    try {
+      await deleteTeacherProfile(teacherId);
+      toast.success('Teacher deleted successfully');
+      await refetchTeachers();
+    } catch (error) {
+      console.error("Error deleting teacher:", error);
+      toast.error("Failed to delete teacher");
     }
-
-    // Load vacation requests
-    const storedVacations = localStorage.getItem('vacations');
-    if (storedVacations) {
-      setVacations(JSON.parse(storedVacations));
-    } else {
-      // Create mock vacation data
-      const mockVacations: Vacation[] = Array(3).fill(null).map((_, i) => ({
-        id: faker.string.uuid(),
-        teacherId: '',  // Will be assigned to random teachers below
-        teacherName: '',
-        startDate: faker.date.future(),
-        endDate: faker.date.future(),
-        reason: faker.lorem.sentence(),
-        approved: faker.datatype.boolean(),
-        createdAt: faker.date.past(),
-      }));
-      
-      setVacations(mockVacations);
-    }
-  }, []);
-
-  // Assign teacher IDs to vacation requests and save to localStorage
-  useEffect(() => {
-    if (teachers.length > 0 && vacations.length > 0) {
-      // Ensure each vacation has a valid teacherId and teacherName
-      const updatedVacations = vacations.map(vacation => {
-        if (!vacation.teacherId || !vacation.teacherName) {
-          const randomTeacher = teachers[Math.floor(Math.random() * teachers.length)];
-          return {
-            ...vacation,
-            teacherId: randomTeacher.id,
-            teacherName: randomTeacher.name
-          };
-        }
-        return vacation;
-      });
-
-      setVacations(updatedVacations);
-      localStorage.setItem('vacations', JSON.stringify(updatedVacations));
-    }
-  }, [teachers, vacations]);
-
-  // Filter teachers based on search query and specialty filter
-  useEffect(() => {
-    let filtered = teachers;
-    
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(teacher => 
-        teacher.name.toLowerCase().includes(query) || 
-        teacher.email.toLowerCase().includes(query)
-      );
-    }
-    
-    // Apply specialty filter
-    if (specialtyFilter !== 'all') {
-      filtered = filtered.filter(teacher => 
-        teacher.specialties?.some(s => s.toLowerCase() === specialtyFilter.toLowerCase())
-      );
-    }
-
-    // Apply tab filter
-    if (activeTab === "onVacation") {
-      filtered = filtered.filter(teacher => teacher.onVacation);
-    } else if (activeTab === "active") {
-      filtered = filtered.filter(teacher => !teacher.onVacation);
-    }
-    
-    setFilteredTeachers(filtered);
-  }, [teachers, searchQuery, specialtyFilter, activeTab]);
-
-  useEffect(() => {
-    // Save teachers to localStorage whenever the state changes
-    localStorage.setItem('teachers', JSON.stringify(teachers));
-  }, [teachers]);
-
-  const pendingVacationRequests = vacations.filter(v => !v.approved);
-
-  const handleAddTeacher = () => {
-    setOpen(true);
-    setSelectedTeacher(null);
   };
 
   const handleEditTeacher = (teacher: Teacher) => {
     setSelectedTeacher(teacher);
-    setOpen(true);
-  };
-
-  const handleDeleteTeacher = (id: string) => {
-    setTeachers(teachers.filter(teacher => teacher.id !== id));
-    toast.success("Teacher deleted successfully");
-  };
-
-  const handleSaveTeacher = (teacher: Teacher) => {
-    const updatedTeachers = teachers.map(t => t.id === teacher.id ? teacher : t);
-    if (!teachers.find(t => t.id === teacher.id)) {
-      setTeachers([...teachers, teacher]);
-      toast.success(`Teacher ${teacher.name} created successfully`);
-    } else {
-      setTeachers(updatedTeachers);
-      toast.success(`Teacher ${teacher.name} updated successfully`);
-    }
-  };
-
-  const handleVacationRequest = (teacher: Teacher) => {
-    setSelectedTeacher(teacher);
-    setVacationFormOpen(true);
-  };
-
-  const handleVacationSubmit = (vacation: Vacation) => {
-    setVacations([...vacations, vacation]);
-    toast.success(`Vacation request for ${vacation.teacherName} submitted successfully`);
-  };
-
-  const handleApproveVacation = (id: string) => {
-    const updatedVacations = vacations.map(v => {
-      if (v.id === id) {
-        return { ...v, approved: true };
-      }
-      return v;
-    });
-    
-    setVacations(updatedVacations);
-    
-    // Update teacher's vacation status
-    const vacation = vacations.find(v => v.id === id);
-    if (vacation) {
-      const updatedTeachers = teachers.map(t => {
-        if (t.id === vacation.teacherId) {
-          return { 
-            ...t, 
-            onVacation: true,
-            vacationDates: {
-              start: vacation.startDate,
-              end: vacation.endDate
-            }
-          };
-        }
-        return t;
-      });
-      
-      setTeachers(updatedTeachers);
-    }
-    
-    toast.success("Vacation request approved");
-  };
-
-  const handleRejectVacation = (id: string) => {
-    setVacations(vacations.filter(v => v.id !== id));
-    toast.success("Vacation request rejected");
+    setEditOpen(true);
   };
 
   return (
-    <DashboardLayout role="admin">
-      <div className="space-y-6">
-        <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:space-y-0">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Teachers Management</h1>
-            <p className="text-muted-foreground">
-              Manage teacher profiles, specialties, and vacation requests.
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            <Button onClick={handleAddTeacher}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Teacher
-            </Button>
-          </div>
-        </div>
-
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex justify-between items-center mb-4">
-            <TabsList>
-              <TabsTrigger value="all">All Teachers</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="onVacation">On Vacation</TabsTrigger>
-              <TabsTrigger value="vacationRequests" className="relative">
-                Vacation Requests
-                {pendingVacationRequests.length > 0 && (
-                  <Badge className="ml-2 bg-red-500">{pendingVacationRequests.length}</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-            
-            <div className="flex gap-2">
-              <div className="w-[200px]">
-                <Input
-                  placeholder="Search teachers..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+    <DashboardLayout title="Teachers" role="admin">
+      <div className="container mx-auto py-10">
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-2xl font-bold">Manage Teachers</h2>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="default">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add Teacher
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add Teacher</DialogTitle>
+                <DialogDescription>
+                  Create a new teacher profile.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">Name</Label>
+                  <Input id="name" value={newTeacherName} onChange={(e) => setNewTeacherName(e.target.value)} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">Email</Label>
+                  <Input id="email" type="email" value={newTeacherEmail} onChange={(e) => setNewTeacherEmail(e.target.value)} className="col-span-3" />
+                </div>
               </div>
-              <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by specialty" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Specialties</SelectItem>
-                  {allSpecialties.map(specialty => (
-                    <SelectItem key={specialty} value={specialty}>{specialty}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <TabsContent value="all" className="mt-0">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredTeachers.map(teacher => (
-                    <UserCard
-                      key={teacher.id}
-                      user={teacher}
-                      onEdit={() => handleEditTeacher(teacher)}
-                      onDelete={() => handleDeleteTeacher(teacher.id)}
-                      buttons={[
-                        {
-                          icon: <Calendar className="h-4 w-4" />,
-                          label: "Request Vacation",
-                          onClick: () => handleVacationRequest(teacher)
-                        }
-                      ]}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="active" className="mt-0">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredTeachers.map(teacher => (
-                    <UserCard
-                      key={teacher.id}
-                      user={teacher}
-                      onEdit={() => handleEditTeacher(teacher)}
-                      onDelete={() => handleDeleteTeacher(teacher.id)}
-                      buttons={[
-                        {
-                          icon: <Calendar className="h-4 w-4" />,
-                          label: "Request Vacation",
-                          onClick: () => handleVacationRequest(teacher)
-                        }
-                      ]}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="onVacation" className="mt-0">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredTeachers.map(teacher => (
-                    <UserCard
-                      key={teacher.id}
-                      user={teacher}
-                      onEdit={() => handleEditTeacher(teacher)}
-                      onDelete={() => handleDeleteTeacher(teacher.id)}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="vacationRequests" className="mt-0">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {pendingVacationRequests.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground">
-                      No pending vacation requests
+              <DialogFooter>
+                <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" onClick={handleCreateTeacher}>Create</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        {loading ? (
+          <p>Loading teachers...</p>
+        ) : (
+          <Table>
+            <TableCaption>A list of your teachers.</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Avatar</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Created At</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {teachers.map((teacher) => (
+                <TableRow key={teacher.id}>
+                  <TableCell className="font-medium">
+                    <img src={teacher.avatarUrl} alt={teacher.name} className="w-8 h-8 rounded-full" />
+                  </TableCell>
+                  <TableCell className="font-medium">{teacher.name}</TableCell>
+                  <TableCell>{teacher.email}</TableCell>
+                  <TableCell>{teacher.createdAt.toLocaleDateString()}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditTeacher(teacher)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <TeacherProfile teacher={teacher} onClose={refetchTeachers} refetchTeachers={refetchTeachers} />
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteTeacher(teacher.id)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
                     </div>
-                  ) : (
-                    pendingVacationRequests.map(vacation => (
-                      <VacationApprovalCard
-                        key={vacation.id}
-                        vacation={vacation}
-                        onApprove={handleApproveVacation}
-                        onReject={handleRejectVacation}
-                      />
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
-
-      <TeacherForm
-        open={open}
-        onClose={() => setOpen(false)}
-        onSave={handleSaveTeacher}
-        teacher={selectedTeacher || undefined}
-      />
-      
       {selectedTeacher && (
-        <VacationRequestForm
-          open={vacationFormOpen}
-          onClose={() => setVacationFormOpen(false)}
-          onSubmit={handleVacationSubmit}
+        <EditTeacherDialog
+          open={editOpen}
+          setOpen={setEditOpen}
           teacher={selectedTeacher}
+          refetchTeachers={refetchTeachers}
         />
       )}
     </DashboardLayout>
+  );
+};
+
+interface EditTeacherDialogProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  teacher: Teacher;
+  refetchTeachers: () => Promise<void>;
+}
+
+const EditTeacherDialog: React.FC<EditTeacherDialogProps> = ({ open, setOpen, teacher, refetchTeachers }) => {
+  const [name, setName] = useState(teacher.name);
+  const [email, setEmail] = useState(teacher.email);
+  const [taxNumber, setTaxNumber] = useState(teacher.taxNumber);
+  const [phoneNumber, setPhoneNumber] = useState(teacher.phoneNumber);
+
+  const handleUpdateTeacher = async () => {
+    try {
+      await updateTeacherProfile(teacher.id, {
+        name,
+        email,
+        taxNumber,
+        phoneNumber
+      });
+      toast.success('Teacher updated successfully');
+      setOpen(false);
+      await refetchTeachers();
+    } catch (error) {
+      console.error("Error updating teacher:", error);
+      toast.error("Failed to update teacher");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit Teacher</DialogTitle>
+          <DialogDescription>
+            Make changes to the teacher profile here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">Name</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="email" className="text-right">Email</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="taxNumber" className="text-right">Tax Number</Label>
+            <Input id="taxNumber" value={taxNumber} onChange={(e) => setTaxNumber(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="phoneNumber" className="text-right">Phone Number</Label>
+            <Input id="phoneNumber" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="col-span-3" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" onClick={handleUpdateTeacher}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface TeacherProfileProps {
+  teacher: Teacher;
+  onClose: () => void;
+  refetchTeachers: () => Promise<void>;
+}
+
+const TeacherProfile = ({ teacher, onClose, refetchTeachers }: TeacherProfileProps) => {
+  const [isVacationDialogOpen, setIsVacationDialogOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [reason, setReason] = useState('');
+  const { user } = useAuth();
+  const [vacations, setVacations] = useState<Vacation[]>([]);
+  const [loadingVacations, setLoadingVacations] = useState(true);
+
+  useEffect(() => {
+    const fetchVacationHistory = async () => {
+      setLoadingVacations(true);
+      try {
+        const result = await getTeacherVacations(teacher.userId);
+        if (result.success) {
+          setVacations(result.vacations || []);
+        } else {
+          console.error('Failed to fetch vacation history');
+          toast.error('Failed to load vacation history');
+        }
+      } catch (error) {
+        console.error('Error fetching vacation history:', error);
+        toast.error('Error loading vacation history');
+      } finally {
+        setLoadingVacations(false);
+      }
+    };
+
+    fetchVacationHistory();
+  }, [teacher.userId]);
+
+  const handleVacationRequestSubmit = async () => {
+    if (!startDate || !endDate || !reason) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    try {
+      if (!user) {
+        toast.error('User not authenticated');
+        return;
+      }
+
+      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
+      const formattedEndDate = format(endDate, 'yyyy-MM-dd');
+
+      await requestVacation(teacher.userId, teacher.name, formattedStartDate, formattedEndDate, reason);
+      toast.success('Vacation request submitted successfully');
+      setIsVacationDialogOpen(false);
+    } catch (error) {
+      console.error('Error requesting vacation:', error);
+      toast.error('Failed to request vacation');
+    }
+  };
+
+  const renderVacations = () => {
+    if (loadingVacations) return <p className="text-sm text-slate-500">Loading vacation history...</p>;
+    
+    if (!vacations.length) return <p className="text-sm text-slate-500">No vacation records found.</p>;
+    
+    return vacations.map(vacation => (
+      <div key={vacation.id} className="p-3 border border-slate-200 rounded-md mb-2">
+        <div className="flex justify-between">
+          <span className="font-medium">{new Date(vacation.start_date).toLocaleDateString()} - {new Date(vacation.end_date).toLocaleDateString()}</span>
+          <span className={`text-xs px-2 py-1 rounded-full ${
+            vacation.status === 'approved' ? 'bg-green-100 text-green-800' : 
+            vacation.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+            'bg-amber-100 text-amber-800'
+          }`}>
+            {vacation.status === 'approved' ? 'Approved' : 
+             vacation.status === 'rejected' ? 'Rejected' : 'Pending'}
+          </span>
+        </div>
+        {vacation.reason && <p className="text-sm mt-1 text-slate-600">{vacation.reason}</p>}
+      </div>
+    ));
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Calendar className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[525px]">
+        <DialogHeader>
+          <DialogTitle>Teacher Profile</DialogTitle>
+          <DialogDescription>
+            View and manage teacher profile details and vacation requests.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <h3 className="text-lg font-semibold mb-2">Teacher Information</h3>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-3 items-center gap-4">
+              <Label className="text-right">Name</Label>
+              <Input value={teacher.name} readOnly className="col-span-2" />
+            </div>
+            <div className="grid grid-cols-3 items-center gap-4">
+              <Label className="text-right">Email</Label>
+              <Input value={teacher.email} readOnly className="col-span-2" />
+            </div>
+          </div>
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">Vacation History</h3>
+            {renderVacations()}
+            <Button variant="default" onClick={() => setIsVacationDialogOpen(true)}>
+              Request Vacation
+            </Button>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+
+      {/* Vacation Request Dialog */}
+      <Dialog open={isVacationDialogOpen} onOpenChange={setIsVacationDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Request Vacation</DialogTitle>
+            <DialogDescription>
+              Fill out the details for your vacation request.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="startDate" className="text-right">Start Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <DatePicker
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    disabled={endDate ? (date) => date > endDate : false}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="endDate" className="text-right">End Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <DatePicker
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    disabled={startDate ? (date) => date < startDate : false}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reason" className="text-right">Reason</Label>
+              <Textarea id="reason" value={reason} onChange={(e) => setReason(e.target.value)} className="col-span-3" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setIsVacationDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" onClick={handleVacationRequestSubmit}>Submit Request</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Dialog>
   );
 };
 

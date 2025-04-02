@@ -59,13 +59,20 @@ export const testSupabaseConnection = async () => {
     } catch (tableError) {
       console.error('Exception testing table connection:', tableError);
       
-      // Last resort: Try direct API call with URL from supabase object
+      // Last resort: Try direct API call
       try {
-        // Fixed: Access URL properly from supabase client options
-        const url = new URL(supabase.options.url);
-        const authResponse = await fetch(`${url.origin}/auth/v1/`, {
+        // Get the URL from the Supabase config
+        const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        
+        if (!url || !apiKey) {
+          console.error('Supabase URL or API key not found in environment variables');
+          return false;
+        }
+        
+        const authResponse = await fetch(`${url}/auth/v1/`, {
           headers: {
-            'apikey': supabase.options.global.headers.apikey as string,
+            'apikey': apiKey,
             'Content-Type': 'application/json'
           }
         });

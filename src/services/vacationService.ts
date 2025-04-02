@@ -12,7 +12,7 @@ export interface Vacation {
   teacher_name?: string;
   created_at?: string;
   updated_at?: string;
-  approved?: boolean | null;
+  status?: string; // Using status instead of approved
 }
 
 // Function to request a vacation
@@ -51,7 +51,7 @@ export const getPendingVacationRequests = async () => {
     const { data, error } = await supabase
       .from('vacations')
       .select('*')
-      .is('approved', null) // Use IS NULL for pending requests
+      .is('status', null) // Use status field
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -72,7 +72,7 @@ export const handleVacationRequest = async (vacationId: string, isApproved: bool
     const { data, error } = await supabase
       .from('vacations')
       .update({
-        approved: isApproved
+        status: isApproved ? 'approved' : 'rejected' // Use status instead of approved
       })
       .eq('id', vacationId)
       .select()
