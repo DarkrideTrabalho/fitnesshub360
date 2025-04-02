@@ -23,7 +23,8 @@ import SettingsDialog from './SettingsDialog';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  role: 'admin' | 'teacher' | 'student';
+  role?: 'admin' | 'teacher' | 'student';
+  title?: string;
 }
 
 interface NavItem {
@@ -53,8 +54,9 @@ const DASHBOARD_NAV_ITEMS: Record<string, NavItem[]> = {
   ],
 };
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role = 'admin', title }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navItems = DASHBOARD_NAV_ITEMS[role] || [];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -71,7 +73,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => 
               </NavLink>
               
               <nav className="hidden md:flex ml-10 space-x-8">
-                {DASHBOARD_NAV_ITEMS[role].map(item => (
+                {navItems.map(item => (
                   <NavLink
                     key={item.href}
                     to={item.href}
@@ -117,7 +119,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => 
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="pt-2 pb-3 space-y-1">
-              {DASHBOARD_NAV_ITEMS[role].map((item) => (
+              {navItems.map((item) => (
                 <NavLink
                   key={item.href}
                   to={item.href}
@@ -142,6 +144,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => 
       </header>
       
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {title && <h1 className="text-3xl font-bold mb-6">{title}</h1>}
         {children}
       </main>
       

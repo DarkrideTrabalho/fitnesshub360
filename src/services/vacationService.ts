@@ -3,17 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Defining interface for vacation data to match the database schema
-interface Vacation {
+export interface Vacation {
   id: string;
   user_id?: string;
-  teacher_id?: string;
-  teacher_name?: string;
   start_date: string;
   end_date: string;
   reason?: string;
-  approved?: boolean;
+  teacher_name?: string;
   created_at?: string;
   updated_at?: string;
+  approved?: boolean | null;
 }
 
 // Function to request a vacation
@@ -97,7 +96,7 @@ export const handleVacationRequest = async (vacationId: string, isApproved: bool
         await supabase
           .from('teacher_profiles')
           .update({ on_vacation: true })
-          .eq('id', vacation.user_id);
+          .eq('user_id', vacation.user_id);
       }
       
       // Create a notification
