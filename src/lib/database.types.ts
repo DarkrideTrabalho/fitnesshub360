@@ -96,6 +96,7 @@ export interface Database {
           name: string | null
           email: string | null
           membership_type: string | null
+          membership_status: string | null
           last_check_in: string | null
           avatar_url: string | null
           tax_number: string | null
@@ -110,6 +111,7 @@ export interface Database {
           name?: string | null
           email?: string | null
           membership_type?: string | null
+          membership_status?: string | null
           last_check_in?: string | null
           avatar_url?: string | null
           tax_number?: string | null
@@ -124,6 +126,7 @@ export interface Database {
           name?: string | null
           email?: string | null
           membership_type?: string | null
+          membership_status?: string | null
           last_check_in?: string | null
           avatar_url?: string | null
           tax_number?: string | null

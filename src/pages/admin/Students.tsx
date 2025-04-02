@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Plus, Users, Search, X, Send, Phone, CreditCard, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 import UserCard from "@/components/UserCard";
 import { Student, MOCK_STUDENTS } from "@/lib/types";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const StudentsPage = () => {
   const [students, setStudents] = useState<Student[]>(MOCK_STUDENTS);
@@ -50,7 +51,8 @@ const StudentsPage = () => {
             taxNumber: student.tax_number,
             phoneNumber: student.phone_number,
             userId: student.user_id,
-            membershipStatus: student.membership_status || 'active'
+            // Check if membership_status exists, use a default value if not
+            membershipStatus: 'membership_status' in student ? student.membership_status : 'active'
           }));
           setStudents(transformedStudents);
         }
