@@ -2,45 +2,61 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Defining interface for vacation data to match the database schema
 export interface Vacation {
   id: string;
-  user_id?: string;
+  user_id: string;
+  teacher_name: string;
   start_date: string;
   end_date: string;
   reason?: string;
-  teacher_name?: string;
-  created_at?: string;
-  updated_at?: string;
-  status?: string; // Using status field added to the database
+  status: string;
+  created_at: string;
 }
 
 // Function to request a vacation
-export const requestVacation = async (teacherId: string, teacherName: string, startDate: string, endDate: string, reason: string) => {
+export const requestVacation = async (vacationData) => {
   try {
     const { data, error } = await supabase
       .from('vacations')
       .insert({
-        user_id: teacherId, // Use user_id field as per the schema update
-        teacher_name: teacherName,
-        start_date: startDate,
-        end_date: endDate,
-        reason: reason
+        ...vacationData,
+        status: 'pending'
       })
       .select()
       .single();
 
     if (error) {
       console.error('Error requesting vacation:', error);
-      toast.error('Failed to request vacation');
+      toast.error('Failed to submit vacation request');
       return { success: false, error };
     }
 
     toast.success('Vacation request submitted successfully');
-    return { success: true, vacation: data as Vacation };
+    return { success: true, vacation: data };
   } catch (error) {
     console.error('Exception requesting vacation:', error);
     toast.error('An error occurred while submitting vacation request');
+    return { success: false, error };
+  }
+};
+
+// Function to get vacation requests for a teacher
+export const getTeacherVacations = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('vacations')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching teacher vacations:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, vacations: data };
+  } catch (error) {
+    console.error('Exception fetching teacher vacations:', error);
     return { success: false, error };
   }
 };
@@ -51,103 +67,90 @@ export const getPendingVacationRequests = async () => {
     const { data, error } = await supabase
       .from('vacations')
       .select('*')
-      .is('status', null) // Use status field instead of approved
-      .order('created_at', { ascending: false });
+      .eq('status', 'pending')
+      .order('start_date', { ascending: true });
 
     if (error) {
-      console.error('Error fetching pending vacation requests:', error);
+      console.error('Error fetching pending vacations:', error);
       return { success: false, error };
     }
 
-    return { success: true, vacations: data as Vacation[] };
+    return { success: true, vacations: data };
   } catch (error) {
-    console.error('Exception fetching pending vacation requests:', error);
+    console.error('Exception fetching pending vacations:', error);
     return { success: false, error };
   }
 };
 
 // Function to approve or reject a vacation request
-export const handleVacationRequest = async (vacationId: string, isApproved: boolean) => {
+export const handleVacationRequest = async (vacationId, approved) => {
   try {
+    const status = approved ? 'approved' : 'rejected';
+    
     const { data, error } = await supabase
       .from('vacations')
-      .update({
-        status: isApproved ? 'approved' : 'rejected' // Use status field
+      .update({ 
+        status: status,
+        updated_at: new Date().toISOString()
       })
       .eq('id', vacationId)
       .select()
       .single();
 
     if (error) {
-      console.error('Error handling vacation request:', error);
-      toast.error(`Failed to ${isApproved ? 'approve' : 'reject'} vacation request`);
+      console.error(`Error ${status} vacation:`, error);
       return { success: false, error };
     }
 
-    // Cast to our Vacation type
-    const vacation = data as Vacation;
-
-    // If approved, update teacher's on_vacation status if the vacation starts today
-    if (isApproved) {
+    // If approved, update the teacher's on_vacation status
+    if (approved) {
       const today = new Date().toISOString().split('T')[0];
+      const startDate = data.start_date;
+      const endDate = data.end_date;
       
-      if (vacation.start_date <= today && vacation.end_date >= today) {
-        // Use user_id field which stores the teacher ID in our schema
-        await supabase
+      // Check if the vacation is current
+      const isCurrentVacation = today >= startDate && today <= endDate;
+      
+      if (isCurrentVacation && data.user_id) {
+        const { error: teacherError } = await supabase
           .from('teacher_profiles')
           .update({ on_vacation: true })
-          .eq('user_id', vacation.user_id);
+          .eq('user_id', data.user_id);
+          
+        if (teacherError) {
+          console.error('Error updating teacher vacation status:', teacherError);
+        }
       }
-      
-      // Create a notification
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: vacation.user_id,
-          title: 'Vacation Request Approved',
-          message: `Your vacation request from ${vacation.start_date} to ${vacation.end_date} has been approved.`,
-          type: 'vacation_approval',
-          read: false
-        });
-    } else {
-      // Create a notification for rejection
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: vacation.user_id,
-          title: 'Vacation Request Rejected',
-          message: `Your vacation request from ${vacation.start_date} to ${vacation.end_date} has been rejected.`,
-          type: 'vacation_rejection',
-          read: false
-        });
     }
 
-    toast.success(`Vacation request ${isApproved ? 'approved' : 'rejected'} successfully`);
-    return { success: true, vacation };
+    return { success: true, vacation: data };
   } catch (error) {
     console.error('Exception handling vacation request:', error);
-    toast.error('An error occurred while processing the vacation request');
     return { success: false, error };
   }
 };
 
-// Function to get teacher's vacations
-export const getTeacherVacations = async (teacherId: string) => {
+// Function to cancel a vacation request
+export const cancelVacationRequest = async (vacationId) => {
   try {
     const { data, error } = await supabase
       .from('vacations')
-      .select('*')
-      .eq('user_id', teacherId)
-      .order('start_date', { ascending: false });
+      .delete()
+      .eq('id', vacationId)
+      .select()
+      .single();
 
     if (error) {
-      console.error('Error fetching teacher vacations:', error);
+      console.error('Error canceling vacation request:', error);
+      toast.error('Failed to cancel vacation request');
       return { success: false, error };
     }
 
-    return { success: true, vacations: data as Vacation[] };
+    toast.success('Vacation request canceled successfully');
+    return { success: true };
   } catch (error) {
-    console.error('Exception fetching teacher vacations:', error);
+    console.error('Exception canceling vacation request:', error);
+    toast.error('An error occurred while canceling vacation request');
     return { success: false, error };
   }
 };

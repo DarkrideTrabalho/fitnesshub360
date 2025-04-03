@@ -63,6 +63,48 @@ export const getAllClasses = async () => {
   }
 };
 
+// Function to get classes for today
+export const getClassesForToday = async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    const { data, error } = await supabase
+      .from('classes')
+      .select('*')
+      .eq('date', today)
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching today\'s classes:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, classes: data };
+  } catch (error) {
+    console.error('Exception fetching today\'s classes:', error);
+    return { success: false, error };
+  }
+};
+
+// Function to get the total count of classes
+export const getClassesCount = async () => {
+  try {
+    const { count, error } = await supabase
+      .from('classes')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) {
+      console.error('Error counting classes:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, count };
+  } catch (error) {
+    console.error('Exception counting classes:', error);
+    return { success: false, error };
+  }
+};
+
 // Function to get a class by ID
 export const getClassById = async (classId: string) => {
   try {

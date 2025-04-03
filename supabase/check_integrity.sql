@@ -66,6 +66,22 @@ AND c.date BETWEEN CURRENT_DATE AND CURRENT_DATE + interval '7 days'
 AND c.date BETWEEN v.start_date AND v.end_date
 ORDER BY c.date;
 
+-- Update status in student_payments table based on payment_date and due_date
+DO $$
+BEGIN
+    UPDATE student_payments
+    SET status = CASE
+        WHEN payment_date IS NOT NULL THEN 'paid'
+        WHEN due_date < CURRENT_DATE THEN 'overdue'
+        ELSE 'pending'
+    END
+    WHERE (
+        (payment_date IS NOT NULL AND status != 'paid') OR
+        (payment_date IS NULL AND due_date < CURRENT_DATE AND status != 'overdue') OR
+        (payment_date IS NULL AND due_date >= CURRENT_DATE AND status != 'pending')
+    );
+END $$;
+
 -- List overdue payments
 SELECT sp.id, s.name as student_name, sp.amount, sp.due_date, NOW() - sp.due_date as days_overdue
 FROM student_payments sp
