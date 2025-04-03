@@ -4,7 +4,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { Calendar, User } from 'lucide-react';
-import { Vacation } from '@/lib/types/vacations';
 
 interface VacationProps {
   id: string;

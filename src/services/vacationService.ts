@@ -64,6 +64,7 @@ export const getTeacherVacations = async (userId) => {
 // Function to get pending vacation requests
 export const getPendingVacationRequests = async () => {
   try {
+    // Fix: Query by status instead of a non-existent 'approved' column
     const { data, error } = await supabase
       .from('vacations')
       .select('*')
