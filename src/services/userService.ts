@@ -160,3 +160,88 @@ export const updateUserProfile = async (profileId: string, userData: any, role: 
     return { success: false, error };
   }
 };
+
+// Function to create a teacher profile using the database function
+export const createTeacherProfile = async (name: string, email: string, adminUserId: string) => {
+  try {
+    // First, create a user in auth.users
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password: 'temporary-password', // This should be changed by the user
+      email_confirm: true
+    });
+    
+    if (authError) {
+      console.error('Error creating teacher user:', authError);
+      throw authError;
+    }
+    
+    // Then use the database function to create the teacher profile
+    const { data, error } = await supabase.rpc('create_teacher_profile', {
+      p_name: name,
+      p_email: email,
+      p_user_id: authData.user.id
+    });
+    
+    if (error) {
+      console.error('Error creating teacher profile:', error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Exception creating teacher profile:', error);
+    throw error;
+  }
+};
+
+// Function to delete a teacher profile using the database function
+export const deleteTeacherProfile = async (teacherId: string) => {
+  try {
+    const { data, error } = await supabase.rpc('delete_teacher_profile', {
+      p_teacher_id: teacherId
+    });
+    
+    if (error) {
+      console.error('Error deleting teacher profile:', error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Exception deleting teacher profile:', error);
+    throw error;
+  }
+};
+
+// Function to fetch all teacher profiles using the database function
+export const fetchTeacherProfiles = async () => {
+  try {
+    const { data, error } = await supabase.rpc('fetch_teacher_profiles');
+    
+    if (error) {
+      console.error('Error fetching teacher profiles:', error);
+      throw error;
+    }
+    
+    // Transform the data to match the Teacher interface
+    const teachers = data.map((teacher: any) => ({
+      id: teacher.id,
+      name: teacher.name,
+      email: teacher.email,
+      role: 'teacher',
+      createdAt: new Date(teacher.created_at),
+      specialties: teacher.specialties || [],
+      onVacation: teacher.on_vacation || false,
+      avatarUrl: teacher.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(teacher.name || 'TP'),
+      userId: teacher.user_id,
+      taxNumber: teacher.tax_number || '',
+      phoneNumber: teacher.phone_number || ''
+    }));
+    
+    return teachers;
+  } catch (error) {
+    console.error('Exception fetching teacher profiles:', error);
+    throw error;
+  }
+};

@@ -12,7 +12,7 @@ export interface Vacation {
   teacher_name?: string;
   created_at?: string;
   updated_at?: string;
-  status?: string; // Using status instead of approved
+  status?: string; // Using status field added to the database
 }
 
 // Function to request a vacation
@@ -21,7 +21,7 @@ export const requestVacation = async (teacherId: string, teacherName: string, st
     const { data, error } = await supabase
       .from('vacations')
       .insert({
-        user_id: teacherId, // Store teacher ID in user_id field
+        user_id: teacherId, // Use user_id field as per the schema update
         teacher_name: teacherName,
         start_date: startDate,
         end_date: endDate,
@@ -51,7 +51,7 @@ export const getPendingVacationRequests = async () => {
     const { data, error } = await supabase
       .from('vacations')
       .select('*')
-      .is('status', null) // Use status field
+      .is('status', null) // Use status field instead of approved
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -72,7 +72,7 @@ export const handleVacationRequest = async (vacationId: string, isApproved: bool
     const { data, error } = await supabase
       .from('vacations')
       .update({
-        status: isApproved ? 'approved' : 'rejected' // Use status instead of approved
+        status: isApproved ? 'approved' : 'rejected' // Use status field
       })
       .eq('id', vacationId)
       .select()
@@ -84,7 +84,7 @@ export const handleVacationRequest = async (vacationId: string, isApproved: bool
       return { success: false, error };
     }
 
-    // Cast to our Vacation type to properly type the response
+    // Cast to our Vacation type
     const vacation = data as Vacation;
 
     // If approved, update teacher's on_vacation status if the vacation starts today

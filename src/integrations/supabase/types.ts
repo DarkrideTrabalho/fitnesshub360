@@ -95,6 +95,30 @@ export type Database = {
           },
         ]
       }
+      date_picker_data: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          label: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          label?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          label?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       enrollments: {
         Row: {
           attended: boolean | null
@@ -359,6 +383,7 @@ export type Database = {
           id: string
           reason: string | null
           start_date: string
+          status: string | null
           teacher_name: string | null
           updated_at: string | null
           user_id: string | null
@@ -369,6 +394,7 @@ export type Database = {
           id?: string
           reason?: string | null
           start_date: string
+          status?: string | null
           teacher_name?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -379,6 +405,7 @@ export type Database = {
           id?: string
           reason?: string | null
           start_date?: string
+          status?: string | null
           teacher_name?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -390,6 +417,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_teacher_profile: {
+        Args: {
+          p_name: string
+          p_email: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      delete_teacher_profile: {
+        Args: {
+          p_teacher_id: string
+        }
+        Returns: boolean
+      }
+      fetch_teacher_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          on_vacation: boolean | null
+          specialties: string[] | null
+          updated_at: string | null
+          user_id: string
+        }[]
+      }
       get_user_settings: {
         Args: {
           p_user_id: string

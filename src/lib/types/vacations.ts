@@ -2,11 +2,11 @@
 // Vacation Types
 export interface Vacation {
   id: string;
-  teacherId: string;
+  user_id: string;
   teacherName: string;
   startDate: Date;
   endDate: Date;
   reason?: string;
-  approved: boolean;
+  status?: string;
   createdAt: Date;
 }

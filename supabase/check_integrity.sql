@@ -19,8 +19,8 @@ BEGIN
     UPDATE teacher_profiles t
     SET on_vacation = true
     FROM vacations v
-    WHERE t.id = v.teacher_id
-    AND v.approved = true
+    WHERE t.user_id = v.user_id
+    AND v.status = 'approved'
     AND CURRENT_DATE BETWEEN v.start_date AND v.end_date
     AND t.on_vacation = false;
 
@@ -30,8 +30,8 @@ BEGIN
     WHERE t.on_vacation = true
     AND NOT EXISTS (
         SELECT 1 FROM vacations v
-        WHERE t.id = v.teacher_id
-        AND v.approved = true
+        WHERE t.user_id = v.user_id
+        AND v.status = 'approved'
         AND CURRENT_DATE BETWEEN v.start_date AND v.end_date
     );
 END $$;
@@ -52,7 +52,7 @@ BEGIN
     UPDATE vacations v
     SET teacher_name = t.name
     FROM teacher_profiles t
-    WHERE v.teacher_id = t.id
+    WHERE v.user_id = t.user_id
     AND (v.teacher_name IS NULL OR v.teacher_name != t.name);
 END $$;
 
@@ -60,8 +60,8 @@ END $$;
 SELECT c.id, c.name, t.name as teacher_name, c.date, v.start_date, v.end_date
 FROM classes c
 JOIN teacher_profiles t ON c.teacher_id = t.id
-JOIN vacations v ON t.id = v.teacher_id
-WHERE v.approved = true
+JOIN vacations v ON t.user_id = v.user_id
+WHERE v.status = 'approved'
 AND c.date BETWEEN CURRENT_DATE AND CURRENT_DATE + interval '7 days'
 AND c.date BETWEEN v.start_date AND v.end_date
 ORDER BY c.date;
