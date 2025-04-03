@@ -12,6 +12,7 @@ interface VacationProps {
   startDate: string | Date;
   endDate: string | Date;
   reason?: string;
+  status?: string;
 }
 
 interface VacationApprovalCardProps {
@@ -43,10 +44,18 @@ const VacationApprovalCard: React.FC<VacationApprovalCardProps> = ({
     return diffDays + 1; // Include the start and end days
   };
 
+  // Don't show approve/reject buttons if the vacation is already approved or rejected
+  const isPending = !vacation.status || vacation.status === 'pending';
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">Vacation Request</CardTitle>
+        {vacation.status && vacation.status !== 'pending' && (
+          <div className={`text-sm font-medium ${vacation.status === 'approved' ? 'text-green-600' : 'text-red-600'}`}>
+            Status: {vacation.status.charAt(0).toUpperCase() + vacation.status.slice(1)}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4 pb-0">
         <div className="flex items-center text-sm">
@@ -75,22 +84,24 @@ const VacationApprovalCard: React.FC<VacationApprovalCardProps> = ({
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex gap-2 pt-4">
-        <Button 
-          variant="default" 
-          className="flex-1" 
-          onClick={() => onApprove(vacation.id)}
-        >
-          Approve
-        </Button>
-        <Button 
-          variant="outline" 
-          className="flex-1 text-red-600"
-          onClick={() => onReject(vacation.id)}
-        >
-          Reject
-        </Button>
-      </CardFooter>
+      {isPending && (
+        <CardFooter className="flex gap-2 pt-4">
+          <Button 
+            variant="default" 
+            className="flex-1" 
+            onClick={() => onApprove(vacation.id)}
+          >
+            Approve
+          </Button>
+          <Button 
+            variant="outline" 
+            className="flex-1 text-red-600"
+            onClick={() => onReject(vacation.id)}
+          >
+            Reject
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 };

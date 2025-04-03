@@ -38,6 +38,12 @@ const ClassOverviewCard: React.FC<ClassOverviewCardProps> = ({ classItem }) => {
             <Users className="h-4 w-4 mr-2 text-slate-500" />
             <span>{fitnessClass.enrolledCount} / {fitnessClass.maxCapacity} students</span>
           </div>
+          {fitnessClass.location && (
+            <div className="flex items-center">
+              <Map className="h-4 w-4 mr-2 text-slate-500" />
+              <span>{fitnessClass.location}</span>
+            </div>
+          )}
         </div>
       </CardContent>
       <CardFooter className="pt-2">

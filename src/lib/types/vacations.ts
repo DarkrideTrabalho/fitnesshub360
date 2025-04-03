@@ -20,7 +20,7 @@ export function convertDbVacationToFrontend(dbVacation: any): Vacation {
     startDate: new Date(dbVacation.start_date),
     endDate: new Date(dbVacation.end_date),
     reason: dbVacation.reason,
-    status: dbVacation.status,
+    status: dbVacation.status || 'pending',
     createdAt: new Date(dbVacation.created_at)
   };
 }
