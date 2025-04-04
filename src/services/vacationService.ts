@@ -18,7 +18,7 @@ export const getAllVacations = async () => {
 
     const formattedVacations = data.map(vacation => ({
       id: vacation.id,
-      teacherId: vacation.user_id || '',
+      teacherId: vacation.user_id || '',  // Use user_id as teacherId
       userId: vacation.user_id || '',
       teacherName: vacation.teacher_name || '',
       startDate: new Date(vacation.start_date),
@@ -51,7 +51,7 @@ export const getPendingVacations = async () => {
 
     const formattedVacations = data.map(vacation => ({
       id: vacation.id,
-      teacherId: vacation.user_id || '',
+      teacherId: vacation.user_id || '',  // Use user_id as teacherId
       userId: vacation.user_id || '',
       teacherName: vacation.teacher_name || '',
       startDate: new Date(vacation.start_date),
@@ -74,7 +74,7 @@ export const getVacationsByTeacherId = async (teacherId: string) => {
     const { data, error } = await supabase
       .from('vacations')
       .select('*')
-      .eq('user_id', teacherId)
+      .eq('user_id', teacherId)  // Use user_id instead of teacher_id
       .order('start_date', { ascending: false });
 
     if (error) {
@@ -84,7 +84,7 @@ export const getVacationsByTeacherId = async (teacherId: string) => {
 
     const formattedVacations = data.map(vacation => ({
       id: vacation.id,
-      teacherId: vacation.user_id || '',
+      teacherId: vacation.user_id || '',  // Use user_id as teacherId
       userId: vacation.user_id || '',
       teacherName: vacation.teacher_name || '',
       startDate: new Date(vacation.start_date),
@@ -113,7 +113,7 @@ export const createVacationRequest = async (vacationData: {
     const { data, error } = await supabase
       .from('vacations')
       .insert({
-        user_id: vacationData.teacherId,
+        user_id: vacationData.teacherId,  // Use user_id instead of teacher_id
         teacher_name: vacationData.teacherName,
         start_date: vacationData.startDate.toISOString().split('T')[0],
         end_date: vacationData.endDate.toISOString().split('T')[0],

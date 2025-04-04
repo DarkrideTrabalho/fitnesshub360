@@ -2,13 +2,13 @@
 export interface Vacation {
   id: string;
   userId?: string;  // Maps to user_id in the database
-  teacherId?: string;  // For client-side usage
+  teacherId?: string;  // For client-side usage with teacher_profiles
   teacherName: string;
   startDate: Date;
   endDate: Date;
   approved?: boolean;  // Derived from status field
   reason?: string;
-  status?: string;
+  status?: string;  // 'pending', 'approved', 'rejected'
 }
 
 // Export mock data (renamed to avoid conflict with mocks.ts)
