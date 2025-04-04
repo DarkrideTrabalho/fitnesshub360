@@ -1,81 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { FitnessClass, convertDbClassToFitnessClass } from '@/lib/types/classes';
-
-// Function to get upcoming classes for today
-export const getUpcomingClassesToday = async () => {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    
-    const { data, error } = await supabase
-      .from('classes')
-      .select('*, teacher_profiles(name)')
-      .eq('date', today)
-      .order('start_time', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching upcoming classes for today:', error);
-      toast.error('Failed to fetch upcoming classes');
-      return { success: false, error, classes: [] };
-    }
-
-    const classes = data.map((classItem) => {
-      // Add the teacher name from the joined table
-      const teacherName = classItem.teacher_profiles?.name || 'Unknown';
-      return convertDbClassToFitnessClass({
-        ...classItem,
-        teacher_name: teacherName
-      });
-    });
-
-    return { success: true, classes };
-  } catch (error) {
-    console.error('Exception fetching upcoming classes for today:', error);
-    toast.error('An error occurred while fetching upcoming classes');
-    return { success: false, error, classes: [] };
-  }
-};
-
-// Define interfaces to prevent excessive type instantiation
-export interface ClassData {
-  id?: string;
-  name: string;
-  description?: string;
-  teacher_id?: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  max_capacity?: number;
-  enrolled_count?: number;
-  category?: string;
-  image_url?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Function to create a new class
-export const createClass = async (classData: ClassData) => {
-  try {
-    const { data, error } = await supabase
-      .from('classes')
-      .insert(classData)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating class:', error);
-      toast.error('Failed to create class');
-      return { success: false, error };
-    }
-
-    toast.success('Class created successfully');
-    return { success: true, class: data };
-  } catch (error) {
-    console.error('Exception creating class:', error);
-    toast.error('An error occurred while creating class');
-    return { success: false, error };
-  }
-};
+import { toast } from 'sonner';
 
 // Function to get all classes
 export const getAllClasses = async () => {
@@ -90,17 +16,45 @@ export const getAllClasses = async () => {
       return { success: false, error };
     }
 
-    return { success: true, classes: data };
+    const formattedClasses = data.map(cls => convertDbClassToFitnessClass(cls));
+
+    return { success: true, classes: formattedClasses };
   } catch (error) {
     console.error('Exception fetching classes:', error);
     return { success: false, error };
   }
 };
 
-// Function to get classes for today
-export const getClassesForToday = async () => {
+// Function to get upcoming classes (today and future)
+export const getUpcomingClasses = async () => {
   try {
-    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const { data, error } = await supabase
+      .from('classes')
+      .select('*')
+      .gte('date', today.toISOString().split('T')[0])
+      .order('date', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching upcoming classes:', error);
+      return { success: false, error };
+    }
+
+    const formattedClasses = data.map(cls => convertDbClassToFitnessClass(cls));
+
+    return { success: true, classes: formattedClasses };
+  } catch (error) {
+    console.error('Exception fetching upcoming classes:', error);
+    return { success: false, error };
+  }
+};
+
+// Function to get upcoming classes for today
+export const getUpcomingClassesToday = async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
     
     const { data, error } = await supabase
       .from('classes')
@@ -113,33 +67,16 @@ export const getClassesForToday = async () => {
       return { success: false, error };
     }
 
-    return { success: true, classes: data };
+    const formattedClasses = data.map(cls => convertDbClassToFitnessClass(cls));
+
+    return { success: true, classes: formattedClasses };
   } catch (error) {
     console.error('Exception fetching today\'s classes:', error);
     return { success: false, error };
   }
 };
 
-// Function to get the total count of classes
-export const getClassesCount = async () => {
-  try {
-    const { count, error } = await supabase
-      .from('classes')
-      .select('*', { count: 'exact', head: true });
-
-    if (error) {
-      console.error('Error counting classes:', error);
-      return { success: false, error };
-    }
-
-    return { success: true, count };
-  } catch (error) {
-    console.error('Exception counting classes:', error);
-    return { success: false, error };
-  }
-};
-
-// Function to get a class by ID
+// Function to get a specific class by ID
 export const getClassById = async (classId: string) => {
   try {
     const { data, error } = await supabase
@@ -153,19 +90,69 @@ export const getClassById = async (classId: string) => {
       return { success: false, error };
     }
 
-    return { success: true, class: data };
+    const formattedClass = convertDbClassToFitnessClass(data);
+
+    return { success: true, class: formattedClass };
   } catch (error) {
     console.error('Exception fetching class:', error);
     return { success: false, error };
   }
 };
 
-// Function to update a class
-export const updateClass = async (classId: string, classData: Partial<ClassData>) => {
+// Function to create a class
+export const createClass = async (classData: Omit<FitnessClass, 'id' | 'enrolledCount'>) => {
   try {
     const { data, error } = await supabase
       .from('classes')
-      .update(classData)
+      .insert({
+        name: classData.name,
+        description: classData.description,
+        category: classData.category,
+        teacher_id: classData.teacherId,
+        date: classData.date.toISOString().split('T')[0],
+        start_time: classData.startTime,
+        end_time: classData.endTime,
+        max_capacity: classData.maxCapacity,
+        image_url: classData.imageUrl,
+        location: classData.location
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating class:', error);
+      toast.error('Failed to create class');
+      return { success: false, error };
+    }
+
+    toast.success('Class created successfully');
+    return { success: true, class: convertDbClassToFitnessClass(data) };
+  } catch (error) {
+    console.error('Exception creating class:', error);
+    toast.error('An error occurred while creating class');
+    return { success: false, error };
+  }
+};
+
+// Function to update a class
+export const updateClass = async (classId: string, classData: Partial<FitnessClass>) => {
+  try {
+    const updateData: any = {};
+    
+    if (classData.name) updateData.name = classData.name;
+    if (classData.description !== undefined) updateData.description = classData.description;
+    if (classData.category) updateData.category = classData.category;
+    if (classData.teacherId) updateData.teacher_id = classData.teacherId;
+    if (classData.date) updateData.date = classData.date.toISOString().split('T')[0];
+    if (classData.startTime) updateData.start_time = classData.startTime;
+    if (classData.endTime) updateData.end_time = classData.endTime;
+    if (classData.maxCapacity) updateData.max_capacity = classData.maxCapacity;
+    if (classData.imageUrl !== undefined) updateData.image_url = classData.imageUrl;
+    if (classData.location !== undefined) updateData.location = classData.location;
+
+    const { data, error } = await supabase
+      .from('classes')
+      .update(updateData)
       .eq('id', classId)
       .select()
       .single();
@@ -177,7 +164,7 @@ export const updateClass = async (classId: string, classData: Partial<ClassData>
     }
 
     toast.success('Class updated successfully');
-    return { success: true, class: data };
+    return { success: true, class: convertDbClassToFitnessClass(data) };
   } catch (error) {
     console.error('Exception updating class:', error);
     toast.error('An error occurred while updating class');
@@ -208,8 +195,8 @@ export const deleteClass = async (classId: string) => {
   }
 };
 
-// Function to get classes for a teacher
-export const getTeacherClasses = async (teacherId: string) => {
+// Function to get classes by teacher ID
+export const getClassesByTeacherId = async (teacherId: string) => {
   try {
     const { data, error } = await supabase
       .from('classes')
@@ -222,31 +209,11 @@ export const getTeacherClasses = async (teacherId: string) => {
       return { success: false, error };
     }
 
-    return { success: true, classes: data };
+    const formattedClasses = data.map(cls => convertDbClassToFitnessClass(cls));
+
+    return { success: true, classes: formattedClasses };
   } catch (error) {
     console.error('Exception fetching teacher classes:', error);
-    return { success: false, error };
-  }
-};
-
-// Function to check if a student is enrolled in a class
-export const isStudentEnrolled = async (studentId: string, classId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('enrollments')
-      .select('*')
-      .eq('student_id', studentId)
-      .eq('class_id', classId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows returned" error
-      console.error('Error checking enrollment:', error);
-      return { success: false, error };
-    }
-
-    return { success: true, enrolled: !!data };
-  } catch (error) {
-    console.error('Exception checking enrollment:', error);
     return { success: false, error };
   }
 };

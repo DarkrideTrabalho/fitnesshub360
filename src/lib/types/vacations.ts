@@ -1,14 +1,14 @@
 
 export interface Vacation {
   id: string;
-  teacherId?: string;  // Made optional since database uses user_id
+  teacherId?: string;  // Maps to user_id in the database
   teacherName: string;
   startDate: Date;
   endDate: Date;
-  approved?: boolean;  // Made optional to match status field usage
+  approved?: boolean;  // Derived from status field
   reason?: string;
-  status?: string;  // Added status field
-  userId?: string;  // Added userId field to match DB structure
+  status?: string;
+  userId?: string;   // Maps to user_id in the database
 }
 
 // Export mock data (renamed to avoid conflict with mocks.ts)
