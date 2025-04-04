@@ -318,35 +318,47 @@ export type Database = {
       }
       teacher_profiles: {
         Row: {
+          address: string | null
+          age: number | null
           avatar_url: string | null
           created_at: string | null
           email: string | null
           id: string
           name: string | null
           on_vacation: boolean | null
+          phone_number: string | null
           specialties: string[] | null
+          tax_number: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          address?: string | null
+          age?: number | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
           name?: string | null
           on_vacation?: boolean | null
+          phone_number?: string | null
           specialties?: string[] | null
+          tax_number?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          address?: string | null
+          age?: number | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
           name?: string | null
           on_vacation?: boolean | null
+          phone_number?: string | null
           specialties?: string[] | null
+          tax_number?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -434,13 +446,17 @@ export type Database = {
       fetch_teacher_profiles: {
         Args: Record<PropertyKey, never>
         Returns: {
+          address: string | null
+          age: number | null
           avatar_url: string | null
           created_at: string | null
           email: string | null
           id: string
           name: string | null
           on_vacation: boolean | null
+          phone_number: string | null
           specialties: string[] | null
+          tax_number: string | null
           updated_at: string | null
           user_id: string
         }[]

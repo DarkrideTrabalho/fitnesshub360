@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { TeacherFormData } from '@/components/TeacherFormDialog';
 
 // Function to get all teacher profiles 
 export const getAllTeachers = async () => {
@@ -15,7 +16,23 @@ export const getAllTeachers = async () => {
       return { success: false, error };
     }
 
-    return { success: true, teachers: data };
+    const formattedTeachers = data.map(teacher => ({
+      id: teacher.id,
+      name: teacher.name || '',
+      email: teacher.email || '',
+      phoneNumber: teacher.phone_number || '',
+      address: teacher.address || '',
+      taxNumber: teacher.tax_number || '',
+      age: teacher.age || 0,
+      specialties: Array.isArray(teacher.specialties) 
+        ? teacher.specialties.join(', ') 
+        : (teacher.specialties || ''),
+      onVacation: teacher.on_vacation || false,
+      userId: teacher.user_id,
+      avatarUrl: teacher.avatar_url
+    }));
+
+    return { success: true, teachers: formattedTeachers };
   } catch (error) {
     console.error('Exception fetching teachers:', error);
     return { success: false, error };
@@ -35,7 +52,23 @@ export const getTeachersOnVacation = async () => {
       return { success: false, error };
     }
 
-    return { success: true, teachers: data, count: data.length };
+    const formattedTeachers = data.map(teacher => ({
+      id: teacher.id,
+      name: teacher.name || '',
+      email: teacher.email || '',
+      phoneNumber: teacher.phone_number || '',
+      address: teacher.address || '',
+      taxNumber: teacher.tax_number || '',
+      age: teacher.age || 0,
+      specialties: Array.isArray(teacher.specialties) 
+        ? teacher.specialties.join(', ') 
+        : (teacher.specialties || ''),
+      onVacation: teacher.on_vacation || false,
+      userId: teacher.user_id,
+      avatarUrl: teacher.avatar_url
+    }));
+
+    return { success: true, teachers: formattedTeachers, count: formattedTeachers.length };
   } catch (error) {
     console.error('Exception fetching teachers on vacation:', error);
     return { success: false, error };
@@ -43,11 +76,25 @@ export const getTeachersOnVacation = async () => {
 };
 
 // Function to create a new teacher
-export const createTeacher = async (teacherData) => {
+export const createTeacher = async (teacherData: TeacherFormData) => {
   try {
+    // Convert specialties string to array if needed
+    const specialtiesArray = teacherData.specialties
+      ? teacherData.specialties.split(',').map(item => item.trim()).filter(item => item)
+      : [];
+
     const { data, error } = await supabase
       .from('teacher_profiles')
-      .insert(teacherData)
+      .insert({
+        name: teacherData.name,
+        email: teacherData.email,
+        phone_number: teacherData.phoneNumber,
+        address: teacherData.address,
+        tax_number: teacherData.taxNumber,
+        age: teacherData.age,
+        specialties: specialtiesArray,
+        user_id: crypto.randomUUID() // Generate a UUID since we're not creating an auth user
+      })
       .select()
       .single();
 
@@ -67,11 +114,24 @@ export const createTeacher = async (teacherData) => {
 };
 
 // Function to update a teacher
-export const updateTeacher = async (teacherId, teacherData) => {
+export const updateTeacher = async (teacherId: string, teacherData: TeacherFormData) => {
   try {
+    // Convert specialties string to array if needed
+    const specialtiesArray = teacherData.specialties
+      ? teacherData.specialties.split(',').map(item => item.trim()).filter(item => item)
+      : [];
+
     const { data, error } = await supabase
       .from('teacher_profiles')
-      .update(teacherData)
+      .update({
+        name: teacherData.name,
+        email: teacherData.email,
+        phone_number: teacherData.phoneNumber,
+        address: teacherData.address,
+        tax_number: teacherData.taxNumber,
+        age: teacherData.age,
+        specialties: specialtiesArray
+      })
       .eq('id', teacherId)
       .select()
       .single();
@@ -92,7 +152,7 @@ export const updateTeacher = async (teacherId, teacherData) => {
 };
 
 // Function to delete a teacher
-export const deleteTeacher = async (teacherId) => {
+export const deleteTeacher = async (teacherId: string) => {
   try {
     const { error } = await supabase
       .from('teacher_profiles')
