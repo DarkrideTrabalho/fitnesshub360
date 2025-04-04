@@ -19,11 +19,13 @@ export const getAllVacations = async () => {
     const formattedVacations = data.map(vacation => ({
       id: vacation.id,
       teacherId: vacation.user_id || '',
+      userId: vacation.user_id || '',
       teacherName: vacation.teacher_name || '',
       startDate: new Date(vacation.start_date),
       endDate: new Date(vacation.end_date),
       reason: vacation.reason,
-      status: vacation.status
+      status: vacation.status,
+      approved: vacation.status === 'approved'
     }));
 
     return { success: true, vacations: formattedVacations };
@@ -50,11 +52,13 @@ export const getPendingVacations = async () => {
     const formattedVacations = data.map(vacation => ({
       id: vacation.id,
       teacherId: vacation.user_id || '',
+      userId: vacation.user_id || '',
       teacherName: vacation.teacher_name || '',
       startDate: new Date(vacation.start_date),
       endDate: new Date(vacation.end_date),
       reason: vacation.reason,
-      status: vacation.status
+      status: vacation.status,
+      approved: vacation.status === 'approved'
     }));
 
     return { success: true, vacations: formattedVacations };
@@ -81,11 +85,13 @@ export const getVacationsByTeacherId = async (teacherId: string) => {
     const formattedVacations = data.map(vacation => ({
       id: vacation.id,
       teacherId: vacation.user_id || '',
+      userId: vacation.user_id || '',
       teacherName: vacation.teacher_name || '',
       startDate: new Date(vacation.start_date),
       endDate: new Date(vacation.end_date),
       reason: vacation.reason,
-      status: vacation.status
+      status: vacation.status,
+      approved: vacation.status === 'approved'
     }));
 
     return { success: true, vacations: formattedVacations };
@@ -149,9 +155,20 @@ export const updateVacationStatus = async (vacationId: string, status: 'approved
     }
 
     // If approved, update teacher's vacation status
-    if (status === 'approved') {
-      // Here you would update the teacher's status in teacher_profiles table
-      // This would be a separate function call or database operation
+    if (status === 'approved' && data) {
+      // Get the teacher's ID from the vacation record
+      const userId = data.user_id;
+      
+      if (userId) {
+        const { error: teacherError } = await supabase
+          .from('teacher_profiles')
+          .update({ on_vacation: true })
+          .eq('user_id', userId);
+          
+        if (teacherError) {
+          console.error('Error updating teacher vacation status:', teacherError);
+        }
+      }
     }
 
     toast.success(`Vacation ${status === 'approved' ? 'approved' : 'rejected'} successfully`);

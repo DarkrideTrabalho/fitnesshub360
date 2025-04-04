@@ -32,6 +32,11 @@ export interface Teacher extends UserProfile {
     start: Date;
     end: Date;
   };
+  avatarUrl?: string; // Added for direct access to avatar URL
+  phoneNumber?: string;
+  address?: string;
+  taxNumber?: string;
+  age?: number;
 }
 
 export interface Student extends UserProfile {

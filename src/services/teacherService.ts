@@ -93,6 +93,7 @@ export const createTeacher = async (teacherData: TeacherFormData) => {
         tax_number: teacherData.taxNumber,
         age: teacherData.age,
         specialties: specialtiesArray,
+        avatar_url: teacherData.avatarUrl,
         user_id: crypto.randomUUID() // Generate a UUID since we're not creating an auth user
       })
       .select()
@@ -130,7 +131,8 @@ export const updateTeacher = async (teacherId: string, teacherData: TeacherFormD
         address: teacherData.address,
         tax_number: teacherData.taxNumber,
         age: teacherData.age,
-        specialties: specialtiesArray
+        specialties: specialtiesArray,
+        avatar_url: teacherData.avatarUrl
       })
       .eq('id', teacherId)
       .select()
