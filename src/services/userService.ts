@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Function to check if a user with specified email exists
@@ -162,7 +161,7 @@ export const updateUserProfile = async (profileId: string, userData: any, role: 
 };
 
 // Function to create a teacher profile using the database function
-export const createTeacherProfile = async (name: string, email: string, adminUserId: string) => {
+export const createTeacherProfile = async (name: string, email: string, phoneNumber: string, address: string, taxNumber: string, age: number, userId: string) => {
   try {
     // First, create a user in auth.users
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -191,6 +190,18 @@ export const createTeacherProfile = async (name: string, email: string, adminUse
     return data;
   } catch (error) {
     console.error('Exception creating teacher profile:', error);
+    throw error;
+  }
+};
+
+// Função específica para atualizar um perfil de professor
+export const updateTeacherProfile = async (id: string, data: { name: string; email: string; phoneNumber: string; address: string; taxNumber: string; age: number; }) => {
+  try {
+    // Você pode chamar a função updateUserProfile existente
+    const result = await updateUserProfile(id, data, 'teacher');
+    return result;
+  } catch (error) {
+    console.error('Error updating teacher profile:', error);
     throw error;
   }
 };
@@ -231,12 +242,14 @@ export const fetchTeacherProfiles = async () => {
       email: teacher.email,
       role: 'teacher',
       createdAt: new Date(teacher.created_at),
-      specialties: teacher.specialties || [],
+      specialties: teacher.specialties || '',
       onVacation: teacher.on_vacation || false,
       avatarUrl: teacher.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(teacher.name || 'TP'),
       userId: teacher.user_id,
       taxNumber: teacher.tax_number || '',
-      phoneNumber: teacher.phone_number || ''
+      phoneNumber: teacher.phone_number || '',
+      address: teacher.address || '',
+      age: teacher.age || 0
     }));
     
     return teachers;
