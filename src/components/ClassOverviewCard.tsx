@@ -9,11 +9,16 @@ interface ClassOverviewCardProps {
   classItem: any;
 }
 
+// Extend FitnessClass to include location
+interface ExtendedFitnessClass extends FitnessClass {
+  location?: string;
+}
+
 const ClassOverviewCard: React.FC<ClassOverviewCardProps> = ({ classItem }) => {
   // Convert to FitnessClass format if needed
   const fitnessClass = 'date' in classItem && typeof classItem.date !== 'object' 
     ? convertDbClassToFitnessClass(classItem) 
-    : classItem as FitnessClass;
+    : classItem as ExtendedFitnessClass;
 
   return (
     <Card className="overflow-hidden">

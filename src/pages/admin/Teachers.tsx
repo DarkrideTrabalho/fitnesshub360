@@ -7,7 +7,7 @@ import { UserPlus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import TeacherFormDialog, { TeacherFormData } from "@/components/TeacherFormDialog";
-import { createTeacher, deleteTeacher, getAllTeachers } from "@/services/teacherService";
+import { createTeacher, deleteTeacher, getAllTeachers, updateTeacher } from "@/services/teacherService";
 
 interface Teacher {
   id: string;

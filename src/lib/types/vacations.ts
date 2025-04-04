@@ -1,26 +1,31 @@
 
-// Vacation Types
 export interface Vacation {
   id: string;
-  user_id: string;
-  teacher_name: string;
+  teacherId: string;
+  teacherName: string;
   startDate: Date;
   endDate: Date;
+  approved: boolean;
   reason?: string;
-  status?: string;
-  createdAt: Date;
 }
 
-// Helper function to convert DB vacation to frontend format
-export function convertDbVacationToFrontend(dbVacation: any): Vacation {
-  return {
-    id: dbVacation.id,
-    user_id: dbVacation.user_id,
-    teacher_name: dbVacation.teacher_name || 'Unknown Teacher',
-    startDate: new Date(dbVacation.start_date),
-    endDate: new Date(dbVacation.end_date),
-    reason: dbVacation.reason,
-    status: dbVacation.status || 'pending',
-    createdAt: new Date(dbVacation.created_at)
-  };
-}
+export const MOCK_VACATIONS: Vacation[] = [
+  {
+    id: 'v1',
+    teacherId: 't1',
+    teacherName: 'João Silva',
+    startDate: new Date('2023-06-01'),
+    endDate: new Date('2023-06-15'),
+    approved: false,
+    reason: 'Summer vacation with family'
+  },
+  {
+    id: 'v2',
+    teacherId: 't2',
+    teacherName: 'Maria Oliveira',
+    startDate: new Date('2023-07-10'),
+    endDate: new Date('2023-07-24'),
+    approved: true,
+    reason: 'Medical treatment'
+  },
+];
