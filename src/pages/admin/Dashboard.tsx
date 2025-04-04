@@ -17,7 +17,7 @@ import { getAllStudents } from "@/services/studentService";
 import { FitnessClass } from "@/lib/types/classes";
 
 const Dashboard: React.FC = () => {
-  const [totalStudents, setTotalStudents] = useState(0);
+    const [totalStudents, setTotalStudents] = useState(0);
     const [upcomingClasses, setUpcomingClasses] = useState<FitnessClass[]>([]);
     const [teachersOnVacation, setTeachersOnVacation] = useState([]);
     const [vacationRequests, setVacationRequests] = useState([]);
@@ -163,32 +163,31 @@ const Dashboard: React.FC = () => {
                         <StatCard
                             title="Total Students"
                             value={totalStudents}
-                            icon={Users}
+                            icon={<Users />}
                             color="primary"
                         />
                         <StatCard
                             title="Upcoming Classes Today"
                             value={upcomingClasses.length}
-                            icon={Calendar}
+                            icon={<Calendar />}
                             color="secondary"
                         />
-                         <StatCard
+                        <StatCard
                             title="Total Revenue"
                             value={totalRevenue}
-                            icon={DollarSign}
+                            icon={<DollarSign />}
                             color="success"
                         />
                         <StatCard
                             title="Teachers on Vacation"
                             value={teachersOnVacation.length}
-                            icon={ExternalLink}
+                            icon={<ExternalLink />}
                             color="warning"
                         />
-                        
                         <StatCard
                             title="Overdue Payments"
                             value={overduePayments}
-                            icon={TrendingUp}
+                            icon={<TrendingUp />}
                             color="destructive"
                         />
                     </div>

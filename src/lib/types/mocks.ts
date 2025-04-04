@@ -1,4 +1,3 @@
-
 import { User, UserRole, Teacher, Student } from './users';
 import { FitnessClass } from './classes';
 import { Vacation } from './vacations';
@@ -148,6 +147,6 @@ export const MOCK_VACATIONS: Vacation[] = [
     endDate: new Date('2023-06-15'),
     reason: 'Family vacation',
     approved: true,
-    createdAt: new Date('2023-05-01')
+    status: 'approved'
   }
 ];

@@ -13,6 +13,7 @@ export interface FitnessClass {
   maxCapacity: number;
   enrolledCount: number;
   imageUrl?: string;
+  location?: string;  // Added location property
 }
 
 export interface ClassEnrollment {
@@ -37,6 +38,7 @@ export function convertDbClassToFitnessClass(dbClass: any): FitnessClass {
     endTime: dbClass.end_time,
     maxCapacity: dbClass.max_capacity,
     enrolledCount: dbClass.enrolled_count,
-    imageUrl: dbClass.image_url
+    imageUrl: dbClass.image_url,
+    location: dbClass.location
   };
 }

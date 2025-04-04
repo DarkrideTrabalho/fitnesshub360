@@ -1,6 +1,40 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { FitnessClass, convertDbClassToFitnessClass } from '@/lib/types/classes';
+
+// Function to get upcoming classes for today
+export const getUpcomingClassesToday = async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data, error } = await supabase
+      .from('classes')
+      .select('*, teacher_profiles(name)')
+      .eq('date', today)
+      .order('start_time', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching upcoming classes for today:', error);
+      toast.error('Failed to fetch upcoming classes');
+      return { success: false, error, classes: [] };
+    }
+
+    const classes = data.map((classItem) => {
+      // Add the teacher name from the joined table
+      const teacherName = classItem.teacher_profiles?.name || 'Unknown';
+      return convertDbClassToFitnessClass({
+        ...classItem,
+        teacher_name: teacherName
+      });
+    });
+
+    return { success: true, classes };
+  } catch (error) {
+    console.error('Exception fetching upcoming classes for today:', error);
+    toast.error('An error occurred while fetching upcoming classes');
+    return { success: false, error, classes: [] };
+  }
+};
 
 // Define interfaces to prevent excessive type instantiation
 export interface ClassData {

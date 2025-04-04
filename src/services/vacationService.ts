@@ -18,7 +18,7 @@ export const getVacationRequests = async () => {
 
     const vacations = data.map(vacation => ({
       id: vacation.id,
-      teacherId: vacation.teacher_id || '',
+      teacherId: vacation.user_id || '', // Map user_id to teacherId
       teacherName: vacation.teacher_name || '',
       startDate: vacation.start_date,
       endDate: vacation.end_date,
@@ -52,7 +52,7 @@ export const getPendingVacationRequests = async () => {
 
     const vacations = data.map(vacation => ({
       id: vacation.id,
-      teacherId: vacation.teacher_id || '',
+      teacherId: vacation.user_id || '', // Map user_id to teacherId
       teacherName: vacation.teacher_name || '',
       startDate: vacation.start_date,
       endDate: vacation.end_date,
@@ -91,12 +91,12 @@ export const approveVacationRequest = async (vacationId: string) => {
       .eq('id', vacationId)
       .single();
 
-    if (vacationData && vacationData.teacher_id) {
+    if (vacationData && vacationData.user_id) {  // Using user_id instead of teacher_id
       // Update the teacher's vacation status
       const { error: teacherError } = await supabase
         .from('teacher_profiles')
         .update({ on_vacation: true })
-        .eq('id', vacationData.teacher_id);
+        .eq('id', vacationData.user_id);
 
       if (teacherError) {
         console.error('Error updating teacher vacation status:', teacherError);
@@ -141,7 +141,7 @@ export const createVacationRequest = async (teacherId: string, teacherName: stri
     const { data, error } = await supabase
       .from('vacations')
       .insert({
-        teacher_id: teacherId,
+        user_id: teacherId,  // Using user_id instead of teacher_id
         teacher_name: teacherName,
         start_date: startDate,
         end_date: endDate,

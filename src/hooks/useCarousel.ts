@@ -18,7 +18,7 @@ const useCarousel = (images: string[]) => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [images.length]); // Added images.length as a dependency
 
   return { activeSlide, nextSlide, prevSlide, setActiveSlide };
 };

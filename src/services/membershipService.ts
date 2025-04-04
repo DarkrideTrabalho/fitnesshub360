@@ -127,12 +127,34 @@ export const getOverduePayments = async () => {
 
     if (error) {
       console.error('Error fetching overdue payments:', error);
-      return { success: false, error };
+      return { success: false, error, overduePayments: 0 };
     }
 
-    return { success: true, payments: data };
+    return { success: true, payments: data, overduePayments: data.length };
   } catch (error) {
     console.error('Exception fetching overdue payments:', error);
-    return { success: false, error };
+    return { success: false, error, overduePayments: 0 };
+  }
+};
+
+// Function to get total revenue
+export const getTotalRevenue = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('student_payments')
+      .select('amount')
+      .eq('status', 'paid');
+
+    if (error) {
+      console.error('Error fetching total revenue:', error);
+      return { success: false, error, totalRevenue: 0 };
+    }
+
+    const totalRevenue = data.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+    
+    return { success: true, totalRevenue };
+  } catch (error) {
+    console.error('Exception fetching total revenue:', error);
+    return { success: false, error, totalRevenue: 0 };
   }
 };
