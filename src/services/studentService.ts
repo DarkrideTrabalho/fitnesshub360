@@ -152,3 +152,62 @@ export const deleteStudent = async (studentId) => {
     return { success: false, error };
   }
 };
+
+// Function to get enrolled students with their classes
+export const getEnrolledStudents = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select(`
+        id,
+        student_profiles!inner(
+          id, name, email, phone_number, tax_number, avatar_url
+        ),
+        classes(
+          id, name, date, start_time
+        )
+      `);
+
+    if (error) {
+      console.error('Error fetching enrolled students:', error);
+      return { success: false, error };
+    }
+
+    // Group enrollments by student
+    const studentMap = new Map();
+    
+    data.forEach(enrollment => {
+      const student = enrollment.student_profiles;
+      const studentId = student.id;
+      
+      if (!studentMap.has(studentId)) {
+        studentMap.set(studentId, {
+          id: studentId,
+          name: student.name,
+          email: student.email,
+          phoneNumber: student.phone_number,
+          taxNumber: student.tax_number,
+          avatarUrl: student.avatar_url,
+          enrolledClasses: []
+        });
+      }
+      
+      if (enrollment.classes) {
+        studentMap.get(studentId).enrolledClasses.push({
+          id: enrollment.classes.id,
+          name: enrollment.classes.name,
+          date: new Date(enrollment.classes.date),
+          startTime: enrollment.classes.start_time
+        });
+      }
+    });
+    
+    return { 
+      success: true, 
+      students: Array.from(studentMap.values()) 
+    };
+  } catch (error) {
+    console.error('Exception fetching enrolled students:', error);
+    return { success: false, error };
+  }
+};

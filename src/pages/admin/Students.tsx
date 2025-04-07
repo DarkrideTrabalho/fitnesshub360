@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Plus, Users, Search, X, Send, Phone, CreditCard, AlertCircle, Calendar, UserPlus, Eye, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import { Student } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import EnrolledStudentsTable from "@/components/EnrolledStudentsTable";
 import StudentRegistrationForm from "@/components/StudentRegistrationForm";
+import { getAllStudents, getEnrolledStudents } from "@/services/studentService";
 
 const StudentsPage = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -43,17 +43,15 @@ const StudentsPage = () => {
     const fetchStudents = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('student_profiles')
-          .select('*');
+        const { success, students, error } = await getAllStudents();
         
-        if (error) {
+        if (!success) {
           console.error("Error fetching students:", error);
           return;
         }
         
-        if (data) {
-          const mappedStudents = data.map(student => ({
+        if (students) {
+          const mappedStudents = students.map(student => ({
             id: student.id,
             name: student.name || 'Unknown',
             email: student.email || '',
@@ -66,7 +64,7 @@ const StudentsPage = () => {
             taxNumber: student.tax_number || '',
             phoneNumber: student.phone_number || '',
             userId: student.user_id,
-            membershipStatus: 'active' as string
+            membershipStatus: student.membership_status as string || 'active'
           }));
           
           setStudents(mappedStudents);
@@ -81,55 +79,15 @@ const StudentsPage = () => {
     const fetchEnrolledStudents = async () => {
       setEnrolledLoading(true);
       try {
-        // This query would be more complex in a real app, joining enrollments with classes and students
-        const { data, error } = await supabase
-          .from('enrollments')
-          .select(`
-            id,
-            student_id,
-            class_id,
-            student_profiles!inner(
-              id, name, email, phone_number, tax_number, avatar_url
-            ),
-            classes!inner(
-              id, name, date, start_time
-            )
-          `);
+        const { success, students, error } = await getEnrolledStudents();
         
-        if (error) {
+        if (!success) {
           console.error("Error fetching enrolled students:", error);
           return;
         }
         
-        if (data) {
-          // Group by student
-          const studentMap = new Map();
-          
-          data.forEach(enrollment => {
-            const studentId = enrollment.student_profiles.id;
-            
-            if (!studentMap.has(studentId)) {
-              studentMap.set(studentId, {
-                id: studentId,
-                name: enrollment.student_profiles.name,
-                email: enrollment.student_profiles.email,
-                phoneNumber: enrollment.student_profiles.phone_number,
-                taxNumber: enrollment.student_profiles.tax_number,
-                avatarUrl: enrollment.student_profiles.avatar_url,
-                enrolledClasses: []
-              });
-            }
-            
-            const student = studentMap.get(studentId);
-            student.enrolledClasses.push({
-              id: enrollment.classes.id,
-              name: enrollment.classes.name,
-              date: new Date(enrollment.classes.date),
-              startTime: enrollment.classes.start_time
-            });
-          });
-          
-          setEnrolledStudents(Array.from(studentMap.values()));
+        if (students) {
+          setEnrolledStudents(students);
         }
       } catch (error) {
         console.error("Failed to fetch enrolled students:", error);
