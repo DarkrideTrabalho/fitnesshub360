@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -42,8 +41,8 @@ const formSchema = z.object({
   emergencyContactName: z.string().min(2, { message: 'Emergency contact name is required' }),
   emergencyContactPhone: z.string().min(6, { message: 'Emergency contact phone is required' }),
   membershipType: z.string({ required_error: 'Please select a membership type' }),
-  termsAccepted: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the terms and conditions' }),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: 'You must accept the terms and conditions',
   }),
 });
 
