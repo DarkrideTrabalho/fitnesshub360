@@ -233,9 +233,11 @@ const TeachersPage: React.FC = () => {
                 {filteredTeachers.map((teacher) => (
                   <Card
                     key={teacher.id}
-                    className="overflow-hidden hover:shadow-md transition-shadow duration-300"
+                    className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+                      teacher.onVacation ? 'border-amber-300' : ''
+                    }`}
                   >
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5">
+                    <div className={`p-5 ${teacher.onVacation ? 'bg-gradient-to-r from-amber-50 to-amber-100' : 'bg-gradient-to-r from-blue-50 to-indigo-50'}`}>
                       <div className="flex justify-between mb-4">
                         <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
                           <AvatarImage src={teacher.avatarUrl} alt={teacher.name} />
