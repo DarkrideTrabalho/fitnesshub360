@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Plus, Users, Search, X, Send, Phone, CreditCard, AlertCircle, Calendar, UserPlus, Eye, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,10 +65,11 @@ const StudentsPage = () => {
             taxNumber: student.tax_number || '',
             phoneNumber: student.phone_number || '',
             userId: student.user_id,
-            membershipStatus: student.membership_status as string || 'active'
+            membershipStatus: student.membership_status || 'active'
           }));
           
           setStudents(mappedStudents);
+          console.log("Fetched students:", mappedStudents);
         }
       } catch (error) {
         console.error("Failed to fetch students:", error);
@@ -88,6 +90,7 @@ const StudentsPage = () => {
         
         if (students) {
           setEnrolledStudents(students);
+          console.log("Fetched enrolled students:", students);
         }
       } catch (error) {
         console.error("Failed to fetch enrolled students:", error);
