@@ -1,10 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { Database } from '@/lib/database.types'; 
 
 // Function to get all student profiles
 export const getAllStudents = async () => {
   try {
+    // Let's add explicit console logs to track the process
+    console.log("Fetching all students...");
+    
     const { data, error } = await supabase
       .from('student_profiles')
       .select('*')
@@ -15,7 +19,10 @@ export const getAllStudents = async () => {
       return { success: false, error };
     }
 
-    return { success: true, students: data };
+    console.log("Successfully fetched students. Count:", data?.length);
+    console.log("Student data sample:", data && data.length > 0 ? data[0] : "No students found");
+    
+    return { success: true, students: data || [] };
   } catch (error) {
     console.error('Exception fetching students:', error);
     return { success: false, error };
@@ -156,6 +163,8 @@ export const deleteStudent = async (studentId) => {
 // Function to get enrolled students with their classes
 export const getEnrolledStudents = async () => {
   try {
+    console.log("Fetching enrolled students with their classes...");
+    
     const { data, error } = await supabase
       .from('enrollments')
       .select(`
@@ -173,38 +182,47 @@ export const getEnrolledStudents = async () => {
       return { success: false, error };
     }
 
+    console.log("Raw enrollment data:", data);
+    
     // Group enrollments by student
     const studentMap = new Map();
     
-    data.forEach(enrollment => {
-      const student = enrollment.student_profiles;
-      const studentId = student.id;
-      
-      if (!studentMap.has(studentId)) {
-        studentMap.set(studentId, {
-          id: studentId,
-          name: student.name,
-          email: student.email,
-          phoneNumber: student.phone_number,
-          taxNumber: student.tax_number,
-          avatarUrl: student.avatar_url,
-          enrolledClasses: []
-        });
-      }
-      
-      if (enrollment.classes) {
-        studentMap.get(studentId).enrolledClasses.push({
-          id: enrollment.classes.id,
-          name: enrollment.classes.name,
-          date: new Date(enrollment.classes.date),
-          startTime: enrollment.classes.start_time
-        });
-      }
-    });
+    if (data && data.length > 0) {
+      data.forEach(enrollment => {
+        const student = enrollment.student_profiles;
+        const studentId = student.id;
+        
+        if (!studentMap.has(studentId)) {
+          studentMap.set(studentId, {
+            id: studentId,
+            name: student.name || 'Unknown',
+            email: student.email || '',
+            phoneNumber: student.phone_number || '',
+            taxNumber: student.tax_number || '',
+            avatarUrl: student.avatar_url || '',
+            enrolledClasses: []
+          });
+        }
+        
+        if (enrollment.classes) {
+          studentMap.get(studentId).enrolledClasses.push({
+            id: enrollment.classes.id,
+            name: enrollment.classes.name,
+            date: new Date(enrollment.classes.date),
+            startTime: enrollment.classes.start_time
+          });
+        }
+      });
+    } else {
+      console.log("No enrollments found");
+    }
+    
+    const result = Array.from(studentMap.values());
+    console.log("Processed enrolled students:", result);
     
     return { 
       success: true, 
-      students: Array.from(studentMap.values()) 
+      students: result
     };
   } catch (error) {
     console.error('Exception fetching enrolled students:', error);

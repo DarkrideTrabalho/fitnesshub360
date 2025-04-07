@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Plus, Users, Search, X, Send, Phone, CreditCard, AlertCircle, Calendar, UserPlus, Eye, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,9 @@ const StudentsPage = () => {
           return;
         }
         
-        if (students) {
+        if (students && students.length > 0) {
+          console.log("Raw student data:", students); // Debug log for raw data
+          
           const mappedStudents = students.map(student => ({
             id: student.id,
             name: student.name || 'Unknown',
@@ -69,7 +70,9 @@ const StudentsPage = () => {
           }));
           
           setStudents(mappedStudents);
-          console.log("Fetched students:", mappedStudents);
+          console.log("Mapped students:", mappedStudents);
+        } else {
+          console.log("No students found or empty array returned");
         }
       } catch (error) {
         console.error("Failed to fetch students:", error);
